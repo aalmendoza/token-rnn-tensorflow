@@ -15,7 +15,7 @@ EOF_TOKEN = '<EOF>'
 
 def main():
 	parser = argparse.ArgumentParser()
-	parser.add_argument('--corpus_dir', type=str, default='corpus_dir',
+	parser.add_argument('--corpus_dir', type=str, default='../C_Corpus',
 	                   help='directory of corpus containing tokenized code')
 	parser.add_argument('--corpus_ext', type=str, default='.c.tokens',
 	                   help='extension of files in corpus')
