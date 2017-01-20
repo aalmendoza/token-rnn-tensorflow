@@ -34,10 +34,11 @@ def create_input_file(corpus_dir, corpus_ext, out_file, vocab_size):
 	token_freqs = defaultdict(int)
 	token_files = glob.glob("{0}/*{1}".format(corpus_dir, corpus_ext))
 	with open(temp_token_file, 'w') as f:
+		i = 1
 		for token_file in token_files:
 			f.write(START_TOKEN + "\n")
 			with open(token_file, 'r') as token_f:
-				for token in token_f.read().split(" "):
+				for token in token_f.read().split():
 					token_freqs[token] += 1
 					f.write(token + "\n")
 					total_tokens += 1
