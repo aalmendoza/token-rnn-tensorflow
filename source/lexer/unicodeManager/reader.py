@@ -1,5 +1,5 @@
 import csv
-from utf8Recorder import UTF8Recoder
+from lexer.unicodeManager.utf8Recorder import UTF8Recoder
 
 
 class UnicodeReader:

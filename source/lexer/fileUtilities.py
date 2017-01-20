@@ -1,5 +1,5 @@
 import os
-from utilities import *
+from lexer.utilities import *
 from pygments.lexers import get_lexer_for_filename
 from pygments import lex
 

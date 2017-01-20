@@ -7,11 +7,10 @@ Created on Oct 12, 2015
 '''
 from pygments.token import *
 from collections import OrderedDict
-import Android
-import Api
+import lexer.Android as Android
+import lexer.Api as Api
 import csv
-#import jsbeautifier
-from sets import Set
+# from sets import Set
 import re
 
 SUPPORTED_LANGUAGE_STRINGS = {

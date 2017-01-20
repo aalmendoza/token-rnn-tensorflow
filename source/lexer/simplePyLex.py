@@ -1,14 +1,14 @@
 import sys
 import os
 from lexer.unicodeManager import UnicodeWriter
-from utilities import *
-from fileUtilities import *
+from lexer.utilities import *
+from lexer.fileUtilities import *
 from pygments.lexers import get_lexer_for_filename
 from pygments import lex
 from subprocess import call
-import Android
+import lexer.Android as Android
 import re
-import dictUtils
+import lexer.dictUtils as dictUtils
 import pickle
 
 METADATAFLAG = True
@@ -43,8 +43,8 @@ def writeLexedFile(outputFile, lexedWoComments, flag, explicitWrite):
                     noWS = "<" + noWS + "|" + str(t[0]) + ">"
          
             f.write(noWS.encode("utf-8"))
-            f.write(' ')
-        f.write('\n') #Without a new line between each file, there can be a problem with the SRILM ngram tools?
+            f.write(' '.encode("utf-8"))
+        f.write('\n'.encode("utf-8")) #Without a new line between each file, there can be a problem with the SRILM ngram tools?
 
 
 def main(sourcePath, outputPath, strFlag, token_split, SKIP_BIG, EXPLICIT_TYPE_WRITE):    

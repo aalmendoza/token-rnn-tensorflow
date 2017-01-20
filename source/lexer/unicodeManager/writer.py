@@ -1,4 +1,9 @@
-import csv, codecs, cStringIO
+import csv
+import codecs
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 def strNone(s):
     if s is None:
@@ -15,7 +20,7 @@ class UnicodeWriter:
 
     def __init__(self, f, dialect=csv.excel, delimiter=';', encoding="utf-8", **kwds):
         # Redirect output to a queue
-        self.queue = cStringIO.StringIO()
+        self.queue = StringIO()
         self.writer = csv.writer(self.queue, delimiter=delimiter, dialect=dialect, **kwds)
         self.stream = f
         self.encoder = codecs.getincrementalencoder(encoding)()
