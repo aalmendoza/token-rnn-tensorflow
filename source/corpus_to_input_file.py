@@ -57,5 +57,8 @@ def create_input_file(corpus_dir, corpus_ext, out_file, vocab_size):
 				else:
 					f.write(UNK_TOKEN + "\n")
 
+	print("Total tokens: {0}".format(total_tokens))
+	print("Unique token: {0}".format(len(token_freqs)))
+
 if __name__ == '__main__':
 	main()
