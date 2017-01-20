@@ -6,9 +6,9 @@ import numpy as np
 
 class Model():
 	def __init__(self, args, infer=False):
-	self.start_token = '<START>'
-	self.eof_token = '<EOF>'
-	self.unk_token = '<UNK>'
+		self.start_token = '<START>'
+		self.eof_token = '<EOF>'
+		self.unk_token = '<UNK>'
 
 		self.args = args
 		if infer:
