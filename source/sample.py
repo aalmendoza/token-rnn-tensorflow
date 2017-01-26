@@ -18,6 +18,8 @@ def main():
 					   help='model directory to store checkpointed models')
 	parser.add_argument('--sample', type=int, default=1,
 					   help='0 to use max at each timestep, 1 to sample at each timestep, 2 to sample on spaces')
+	parser.add_argument('--max_tokens', type=int, default=500,
+					   help='maximum number of tokens to generate')
 
 	args = parser.parse_args()
 	sample(args)
@@ -29,12 +31,12 @@ def sample(args):
 		chars, vocab = cPickle.load(f)
 	model = Model(saved_args, True)
 	with tf.Session() as sess:
-		tf.global_variables_initializer().run()
-		saver = tf.train.Saver(tf.global_variables())
+		tf.initialize_all_variables().run()
+		saver = tf.train.Saver(tf.all_variables())
 		ckpt = tf.train.get_checkpoint_state(args.save_dir)
 		if ckpt and ckpt.model_checkpoint_path:
 			saver.restore(sess, ckpt.model_checkpoint_path)
-			print(model.sample(sess, chars, vocab, args.sample))
+			print(model.sample(sess, chars, vocab, args.max_tokens, args.sample))
 
 if __name__ == '__main__':
 	main()

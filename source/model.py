@@ -63,7 +63,7 @@ class Model():
 		self.train_op = optimizer.apply_gradients(zip(grads, tvars))
 
 
-	def sample(self, sess, chars, vocab, sampling_type=1):
+	def sample(self, sess, chars, vocab, max_tokens = 500, sampling_type=1):
 		state = sess.run(self.cell.zero_state(1, tf.float32))
 		cur_tok = self.start_token
 		ret = ""
@@ -73,7 +73,7 @@ class Model():
 			s = np.sum(weights)
 			return(int(np.searchsorted(t, np.random.rand(1)*s)))
 
-		while True:
+		for i in range(max_tokens):
 			x = np.zeros((1, 1))
 			x[0, 0] = vocab[cur_tok]
 			feed = {self.input_data: x, self.initial_state:state}
