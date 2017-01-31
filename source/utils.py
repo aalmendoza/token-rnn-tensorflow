@@ -13,7 +13,7 @@ class TextLoader():
 		self.seq_length = seq_length
 		self.encoding = encoding
 
-		input_file = os.path.join(data_dir, "input.txt")
+		input_file = os.path.join(data_dir, "train.txt")
 		vocab_file = os.path.join(data_dir, "vocab.pkl")
 		tensor_file = os.path.join(data_dir, "data.npy")
 
