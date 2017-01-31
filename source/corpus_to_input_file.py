@@ -40,9 +40,10 @@ def create_train_test_files(corpus_dir, corpus_ext, out_dir, vocab_size, train_p
 
 	vocab = get_vocab(train_files, vocab_size)
 	train_out_file = "{0}train.txt".format(out_dir)
-	test_out_file = "{0}test.txt".format(out_dir)
 	create_input_file(train_files, train_out_file, vocab)
-	create_input_file(test_files, test_out_file, vocab)
+	if len(test_files) > 0:
+		test_out_file = "{0}test.txt".format(out_dir)
+		create_input_file(test_files, test_out_file, vocab)
 
 def split_files(token_files, train_percent):
 	num_train_files = int(train_percent * len(token_files))
