@@ -1,12 +1,10 @@
-# Creates a single file (input.txt) containing all of the tokens in a corpus
-# The corpus is assumed to contain code files that each are a single line
-# and are made of space seperated tokens. This file will be used as input 
-# to the RNN LM and will contain all unique tokens if a vocab_size of -1 is used.
-# Otherwise, the vocab_size most frequent tokens in the corpus are kept
-# and all other tokens are renamed to UNK_TOKEN
+# Creates train and test input files for the RNN LM that contain all
+# of the tokens in a corpus. The corpus is assumed to contain code files
+# that each are a single line and are made of space seperated tokens.
 
 import glob
 import argparse
+from sys import exit
 from collections import defaultdict
 
 UNK_TOKEN = '<UNK>'
@@ -27,6 +25,11 @@ def main():
 						help='Percent of files (.01 - 1) in corpus to use for training')
 
 	args = parser.parse_args()
+
+	if args.train_percent <= 0 or args.train_percent > 1:
+		print("Error: train_percent must be in the range (0, 1]")
+		exit()
+
 	create_train_test_files(args.corpus_dir, args.corpus_ext, args.out_dir,
 		args.vocab_size, args.train_percent)
 
