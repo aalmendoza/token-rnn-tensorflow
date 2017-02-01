@@ -4,6 +4,7 @@
 
 import glob
 import argparse
+import os.path
 from sys import exit
 from collections import defaultdict
 
@@ -39,10 +40,10 @@ def create_train_test_files(corpus_dir, corpus_ext, out_dir, vocab_size, train_p
 	log_file_split(train_files, test_files, out_dir)
 
 	vocab = get_vocab(train_files, vocab_size)
-	train_out_file = "{0}train.txt".format(out_dir)
+	train_out_file = os.path.join(out_dir, "train.txt")
 	create_input_file(train_files, train_out_file, vocab)
 	if len(test_files) > 0:
-		test_out_file = "{0}test.txt".format(out_dir)
+		test_out_file = os.path.join(out_dir, "test.txt")
 		create_input_file(test_files, test_out_file, vocab)
 
 def split_files(token_files, train_percent):
@@ -53,10 +54,11 @@ def split_files(token_files, train_percent):
 	return [train_files, test_files]
 
 def log_file_split(train_files, test_files, out_dir):
-	train_file_log = "{0}/train_files.txt".format(out_dir)
-	test_file_log = "{0}/test_files.txt".format(out_dir)
+	train_file_log = os.path.join(out_dir, "train_files.txt")
+	test_file_log = os.path.join(out_dir, "test_files.txt")
 	log_files(train_file_log, train_files)
-	log_files(test_file_log, test_files)
+	if len(test_files) > 0:
+		log_files(test_file_log, test_files)
 
 def log_files(output_file, file_names):
 	with open(output_file, 'w') as log_file:
