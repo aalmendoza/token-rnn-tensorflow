@@ -25,10 +25,10 @@ def main():
 
 def evaluate(args):
 	with open(os.path.join(args.save_dir, 'config.pkl'), 'rb') as f:
-		saved_args = cPickle.load(f)
+		(saved_args, reverse_input) = cPickle.load(f)
 	with open(os.path.join(args.save_dir, 'chars_vocab.pkl'), 'rb') as f:
 		chars, vocab = cPickle.load(f)
-	model = Model(saved_args, True)
+	model = Model(saved_args, reverse_input, True)
 	with tf.Session() as sess:
 		tf.initialize_all_variables().run()
 		saver = tf.train.Saver(tf.all_variables())

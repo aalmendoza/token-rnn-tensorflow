@@ -2,12 +2,18 @@ import tensorflow as tf
 from tensorflow.python.ops import rnn_cell
 from tensorflow.python.ops import seq2seq
 
+from collections import defaultdict
 import numpy as np
 
 class Model():
-	def __init__(self, args, infer=False):
-		self.start_token = '<START>'
-		self.eof_token = '<EOF>'
+	def __init__(self, args, reverse_input, infer=False):
+		if reverse_input:
+			self.start_token = '<EOF>'
+			self.end_token = '<START>'
+		else:
+			self.start_token = '<START>'
+			self.end_token = '<EOF>'
+
 		self.unk_token = '<UNK>'
 
 		self.args = args
@@ -91,7 +97,7 @@ class Model():
 				sample = weighted_pick(p)
 
 			pred = chars[sample]
-			if pred == self.eof_token:
+			if pred == self.end_token:
 				break
 
 			ret += pred + " "

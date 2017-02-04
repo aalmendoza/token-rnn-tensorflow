@@ -48,6 +48,7 @@ def main():
 	train(args)
 
 def train(args):
+	reverse_input = args.data_dir.endswith('rev/') or args.data_dir.endswith('rev')
 	data_loader = TextLoader(args.data_dir, args.batch_size, args.seq_length)
 	args.vocab_size = data_loader.vocab_size
 	
@@ -75,11 +76,11 @@ def train(args):
 		assert saved_vocab==data_loader.vocab, "Data and loaded model disagree on dictionary mappings!"
 		
 	with open(os.path.join(args.save_dir, 'config.pkl'), 'wb') as f:
-		cPickle.dump(args, f)
+		cPickle.dump((args, reverse_input), f)
 	with open(os.path.join(args.save_dir, 'chars_vocab.pkl'), 'wb') as f:
 		cPickle.dump((data_loader.chars, data_loader.vocab), f)
 		
-	model = Model(args)
+	model = Model(args, reverse_input)
 
 	with tf.Session() as sess:
 		tf.initialize_all_variables().run()
@@ -109,6 +110,9 @@ def train(args):
 					checkpoint_path = os.path.join(args.save_dir, 'model.ckpt')
 					saver.save(sess, checkpoint_path, global_step = e * data_loader.num_batches + b)
 					print("model saved to {}".format(checkpoint_path))
+
+def str2bool(s):
+	return s.lower() in ('t', 'true', '1', 'yes')
 
 if __name__ == '__main__':
 	main()
