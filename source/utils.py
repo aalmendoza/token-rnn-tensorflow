@@ -6,6 +6,8 @@ import numpy as np
 
 import sys
 
+UNK_TOKEN = '<UNK>'
+
 class TextLoader():
 	def __init__(self, data_dir, batch_size, seq_length, encoding='utf-8'):
 		self.data_dir = data_dir
@@ -27,10 +29,13 @@ class TextLoader():
 		self.reset_batch_pointer()
 
 	def preprocess(self, input_file, vocab_file, tensor_file):
+		contains_unk_token = False
 		data = []
 		with codecs.open(input_file, "r", encoding=self.encoding, errors='ignore') as f:
 			for line in f:
 				line_stripped = line[:-1]
+				if line_stripped == UNK_TOKEN:
+					contains_unk_token = True
 				data.append(line_stripped)
 
 		# counter is a map from tokens to its frequency
@@ -38,6 +43,9 @@ class TextLoader():
 		# count_pairs contains the tokens sorted by frequency then lexicographically
 		count_pairs = sorted(counter.items(), key=lambda x: -x[1])
 		self.chars, _ = zip(*count_pairs)
+		if not contains_unk_token:
+			self.chars = self.chars + (UNK_TOKEN,)
+
 		self.vocab_size = len(self.chars)
 		# vocab is a map from a token to a unique id
 		self.vocab = dict(zip(self.chars, range(len(self.chars))))
