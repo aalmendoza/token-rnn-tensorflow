@@ -11,6 +11,8 @@ from collections import defaultdict
 UNK_TOKEN = '<UNK>'
 START_TOKEN = '<START>'
 EOF_TOKEN = '<EOF>'
+TRAIN_FILE = 'train.txt'
+TEST_FILE = 'test.txt'
 
 def main():
 	parser = argparse.ArgumentParser()
@@ -23,12 +25,12 @@ def main():
 	parser.add_argument('--vocab_size', type=int, default=-1,
 	                   help='vocabulary size. A value of -1 corresponds to a vocabulary size equal to the number unique tokens in the corpus')
 	parser.add_argument('--train_percent', type=float, default=.8,
-						help='Percent of files (.01 - 1) in corpus to use for training')
+						help='Percent of files, (0 - 1) exclusive, in corpus to use for training')
 
 	args = parser.parse_args()
 
-	if args.train_percent <= 0 or args.train_percent > 1:
-		print("Error: train_percent must be in the range (0, 1]")
+	if args.train_percent <= 0 or args.train_percent >= 1:
+		print("Error: train_percent must be in the range (0, 1) exclusive")
 		exit()
 
 	create_train_test_files(args.corpus_dir, args.corpus_ext, args.out_dir,
@@ -40,11 +42,11 @@ def create_train_test_files(corpus_dir, corpus_ext, out_dir, vocab_size, train_p
 	log_file_split(train_files, test_files, out_dir)
 
 	vocab = get_vocab(train_files, vocab_size)
-	train_out_file = os.path.join(out_dir, "train.txt")
+	train_out_file = os.path.join(out_dir, TRAIN_FILE)
+	test_out_file = os.path.join(out_dir, TEST_FILE)
 	create_input_file(train_files, train_out_file, vocab)
-	if len(test_files) > 0:
-		test_out_file = os.path.join(out_dir, "test.txt")
-		create_input_file(test_files, test_out_file, vocab)
+	create_input_file(test_files, test_out_file, vocab)
+	create_reversed_input_file(out_dir, train_out_file, test_out_file)
 
 def split_files(token_files, train_percent):
 	num_train_files = int(train_percent * len(token_files))
@@ -95,6 +97,14 @@ def create_input_file(token_files, out_file, vocab):
 						else:
 							f.write(UNK_TOKEN + "\n")
 				f.write(EOF_TOKEN + "\n")
+
+def create_reversed_input_file(out_dir, orig_train_file, orig_test_file):
+	rev_dir = os.path.join(out_dir, "rev")
+	rev_train = os.path.join(rev_dir, TRAIN_FILE)
+	rev_test = os.path.join(rev_dir, TEST_FILE)
+	os.system("mkdir {0} 2>/dev/null".format(rev_dir))
+	os.system("tac {0} > {1}".format(orig_train_file, rev_train))
+	os.system("tac {0} > {1}".format(orig_test_file, rev_test))
 
 if __name__ == '__main__':
 	main()
