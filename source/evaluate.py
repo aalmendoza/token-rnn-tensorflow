@@ -37,7 +37,7 @@ def evaluate(args):
 			saver.restore(sess, ckpt.model_checkpoint_path)
 			token_list = get_tokens(args.code_file)
 			vocab_token_list = convert_to_vocab_tokens(vocab, token_list, model.start_token,
-				model.eof_token, model.unk_token)
+				model.end_token, model.unk_token)
 			probs = model.evaluate(sess, chars, vocab, vocab_token_list)
 			display_results(token_list, probs)
 
@@ -48,7 +48,7 @@ def get_tokens(code_file):
 		token_list = f.read().split(" ")
 	return token_list[:-1] # Remove ending newline entry
 
-def convert_to_vocab_tokens(vocab, token_list, start_token, eof_token, unk_token):
+def convert_to_vocab_tokens(vocab, token_list, start_token, end_token, unk_token):
 	res = [start_token]
 	for token in token_list:
 		if token in vocab:
@@ -56,7 +56,7 @@ def convert_to_vocab_tokens(vocab, token_list, start_token, eof_token, unk_token
 		else:
 			res.append(unk_token)
 
-	res.append(eof_token)
+	res.append(end_token)
 	return res
 
 def display_results(token_list, probs):
