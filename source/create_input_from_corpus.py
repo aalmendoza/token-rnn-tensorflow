@@ -8,11 +8,15 @@ import os.path
 from sys import exit
 from collections import defaultdict
 
+from pygments.lexers import get_lexer_by_name
+from pygments import lex
+
 UNK_TOKEN = '<UNK>'
 START_TOKEN = '<START>'
-EOF_TOKEN = '<EOF>'
+END_TOKEN = '<EOF>'
 TRAIN_FILE = 'train.txt'
 TEST_FILE = 'test.txt'
+TEST_TYPE_FILE = 'test_types.txt'
 
 def main():
 	parser = argparse.ArgumentParser()
@@ -46,9 +50,11 @@ def create_train_test_files(corpus_dir, corpus_ext, out_dir, vocab_size, train_p
 	vocab = get_vocab(train_files, vocab_size)
 	train_out_file = os.path.join(out_dir, TRAIN_FILE)
 	test_out_file = os.path.join(out_dir, TEST_FILE)
+	test_type_out_file = os.path.join(out_dir, TEST_TYPE_FILE)
 	create_input_file(train_files, train_out_file, vocab)
 	create_input_file(test_files, test_out_file, vocab)
-	create_reversed_input_file(out_dir, train_out_file, test_out_file)
+	write_token_types(test_out_file, test_type_out_file)
+	create_reversed_input_file(out_dir, train_out_file, test_out_file, test_type_out_file)
 
 def split_files(token_files, train_percent):
 	num_train_files = int(train_percent * len(token_files))
@@ -98,15 +104,36 @@ def create_input_file(token_files, out_file, vocab):
 							f.write(token + "\n")
 						else:
 							f.write(UNK_TOKEN + "\n")
-				f.write(EOF_TOKEN + "\n")
+				f.write(END_TOKEN + "\n")
 
-def create_reversed_input_file(out_dir, orig_train_file, orig_test_file):
+def write_token_types(token_file, out_file):
+	lexer = get_lexer_by_name('C')
+	with open(out_file, 'w') as fout:
+		with open(token_file, 'r') as fin:
+			for line in fin:
+				token = line[:-1]
+				fout.write(get_token_type(lexer, token) + "\n")
+
+def get_token_type(lexer, token):
+	if token == UNK_TOKEN:
+		return "Token.Name"
+	elif token == START_TOKEN:
+		return 'START_TOKEN'
+	elif token == END_TOKEN:
+		return 'END_TOKEN'
+	else:
+		res = lex(token, lexer)
+		return str(list(res)[0][0])
+
+def create_reversed_input_file(out_dir, orig_train_file, orig_test_file, orig_test_type_file):
 	rev_dir = os.path.join(out_dir, "rev")
 	rev_train = os.path.join(rev_dir, TRAIN_FILE)
 	rev_test = os.path.join(rev_dir, TEST_FILE)
+	rev_test_type = os.path.join(rev_dir, TEST_TYPE_FILE)
 	os.system("mkdir {0} 2>/dev/null".format(rev_dir))
 	os.system("tac {0} > {1}".format(orig_train_file, rev_train))
 	os.system("tac {0} > {1}".format(orig_test_file, rev_test))
+	os.system("tac {0} > {1}".format(orig_test_type_file, rev_test_type))
 
 if __name__ == '__main__':
 	main()
