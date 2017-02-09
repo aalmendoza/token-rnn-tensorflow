@@ -45,7 +45,13 @@ def main():
 							'model.ckpt-*'      : file(s) with model definition (created by tf)
 						""")
 	args = parser.parse_args()
+	validate_args(args)
 	train(args)
+
+def validate_args(args):
+	assert os.path.isdir(args.data_dir), "data_dir {0} doesn't exist".format(args.data_dir)
+	if not os.path.isdir(args.save_dir):
+		os.system("mkdir {0}".format(args.save_dir))
 
 def train(args):
 	reverse_input = args.data_dir.endswith('rev/') or args.data_dir.endswith('rev')

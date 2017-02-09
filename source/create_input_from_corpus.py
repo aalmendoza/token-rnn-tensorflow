@@ -28,13 +28,15 @@ def main():
 						help='Percent of files, (0 - 1) exclusive, in corpus to use for training')
 
 	args = parser.parse_args()
-
-	if args.train_percent <= 0 or args.train_percent >= 1:
-		print("Error: train_percent must be in the range (0, 1) exclusive")
-		exit()
-
+	validate_args(args)
 	create_train_test_files(args.corpus_dir, args.corpus_ext, args.out_dir,
 		args.vocab_size, args.train_percent)
+
+def validate_args(args):
+	assert (args.train_percent > 0 and args.train_percent < 1), "train_percent must be in the range (0, 1) exclusive"
+	assert os.path.isdir(args.corpus_dir), "corpus_dir {0} doesn't exist".format(args.corpus_dir)
+	if not os.path.isdir(args.out_dir):
+		os.system("mkdir {0}".format(args.out_dir))
 
 def create_train_test_files(corpus_dir, corpus_ext, out_dir, vocab_size, train_percent):
 	token_files = glob.glob("{0}/*{1}".format(corpus_dir, corpus_ext))
