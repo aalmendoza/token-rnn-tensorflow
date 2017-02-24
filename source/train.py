@@ -117,8 +117,5 @@ def train(args):
 					saver.save(sess, checkpoint_path, global_step = e * data_loader.num_batches + b)
 					print("model saved to {}".format(checkpoint_path))
 
-def str2bool(s):
-	return s.lower() in ('t', 'true', '1', 'yes')
-
 if __name__ == '__main__':
 	main()

@@ -4,6 +4,7 @@ from tensorflow.python.ops import seq2seq
 
 from collections import defaultdict
 import numpy as np
+from scipy import stats
 
 class Model():
 	def __init__(self, args, reverse_input, infer=False):
@@ -108,6 +109,7 @@ class Model():
 	def evaluate(self, sess, chars, vocab, token_list):
 		token_probs = []
 		state = sess.run(self.cell.zero_state(1, tf.float32))
+		total_entropy = 0
 		for n in range(len(token_list)-1):
 			x = np.zeros((1, 1))
 			x[0, 0] = vocab[token_list[n]]
@@ -115,8 +117,57 @@ class Model():
 			[probs, state] = sess.run([self.probs, self.final_state], feed)
 			prob_dist = probs[0]
 			prob_next_token = prob_dist[vocab[token_list[n+1]]]
+			entropy_next_token = -1.0 * np.log2(prob_next_token)
+			total_entropy += entropy_next_token
 			token_probs.append(prob_next_token)
 			print("Current token: {0}".format(token_list[n]))
-			print("Next token: {0}, Prob: {1}".format(token_list[n+1], prob_next_token))
+			print("Next token: {0}, Entropy: {1}, Prob: {2}".format(token_list[n+1], entropy_next_token, prob_next_token))
 			print("Predicted next token: {0}, Prob: {1}\n".format(chars[np.argmax(prob_dist)], np.max(prob_dist)))
+		print("Average entropy: {0}".format(total_entropy / (len(token_list) - 1)))
 		return token_probs[:-1]
+
+	# reinit state after every new program?
+	def get_entropy_range_by_type(self, sess, chars, vocab, token_file, token_type_file):
+		entropy_map = defaultdict(list)
+		state = sess.run(self.cell.zero_state(1, tf.float32))
+		total_entropy = 0
+
+		num_iterations = 10000
+		limit = num_iterations
+
+		with open(token_file, 'r') as token_f, open(token_type_file, 'r') as token_type_f:
+			token = token_f.readline()[:-1]
+			token_type = token_type_f.readline()[:-1]
+			i = 1
+			while True:
+				next_token = token_f.readline()[:-1]
+				next_token_type = token_type_f.readline()[:-1]
+				if not next_token: break
+
+				if limit <= 0: break
+
+				x = np.zeros((1, 1))
+				x[0, 0] = vocab[token]
+				feed = {self.input_data: x, self.initial_state:state}
+				[probs, state] = sess.run([self.probs, self.final_state], feed)
+				prob_dist = probs[0]
+				prob_next_token = prob_dist[vocab[next_token]]
+				entropy = -1.0 * np.log2(prob_next_token)
+				total_entropy += entropy
+				entropy_map[next_token_type].append(entropy)
+
+				token = next_token
+				token_type = next_token_type
+				print(i)
+				i+=1
+
+				limit -= 1
+		print("Average entropy: {0}".format(total_entropy / num_iterations))
+		entropy_zscore_map = defaultdict(int)
+		for key,value in entropy_map.items():
+			print("{0}: {1}".format(key, np.mean(value)))
+			if len(value) > 1:
+				entropy_zscore_map[key] = stats.zscore(value)
+			else:
+				entropy_zscore_map[key] = [0]
+		return entropy_zscore_map

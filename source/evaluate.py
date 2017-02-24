@@ -17,13 +17,16 @@ def main():
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--save_dir', type=str, default='save',
 					   help='model directory to store checkpointed models')
-	parser.add_argument('--code_file', type=str, default='code.c',
-					   help='code file to evaluate')
+	parser.add_argument('--source', type=str, default='code.c',
+					   help='source file to evaluate')
+	parser.add_argument('--pre_tokenized', type=str, default='false',
+					   help='boolean indicating if the source file is already tokenized')
 
 	args = parser.parse_args()
 	evaluate(args)
 
 def evaluate(args):
+	pre_tokenized = str2bool(args.pre_tokenized)
 	with open(os.path.join(args.save_dir, 'config.pkl'), 'rb') as f:
 		(saved_args, reverse_input) = cPickle.load(f)
 	with open(os.path.join(args.save_dir, 'chars_vocab.pkl'), 'rb') as f:
@@ -35,15 +38,22 @@ def evaluate(args):
 		ckpt = tf.train.get_checkpoint_state(args.save_dir)
 		if ckpt and ckpt.model_checkpoint_path:
 			saver.restore(sess, ckpt.model_checkpoint_path)
-			token_list = get_tokens(args.code_file)
-			vocab_token_list = convert_to_vocab_tokens(vocab, token_list, model.start_token,
+			if pre_tokenized:
+				with open(args.source, 'r') as f:
+					token_list = f.read().split()
+			else:
+				token_list = get_tokens(args.source)
+				
+			token_list = convert_to_vocab_tokens(vocab, token_list, model.start_token,
 				model.end_token, model.unk_token)
-			probs = model.evaluate(sess, chars, vocab, vocab_token_list)
-			display_results(token_list, probs)
+			probs = model.evaluate(sess, chars, vocab, token_list)
 
-def get_tokens(code_file):
+def str2bool(s):
+	return s.lower() in ('t', 'true', '1', 'yes')
+
+def get_tokens(source):
 	tmp_outfile = '/tmp/out.txt'
-	simplePyLex.main(code_file, tmp_outfile, 3, "full", "True", "False")
+	simplePyLex.main(source, tmp_outfile, 3, "full", "True", "False")
 	with open(tmp_outfile) as f:
 		token_list = f.read().split(" ")
 	return token_list[:-1] # Remove ending newline entry
@@ -58,10 +68,6 @@ def convert_to_vocab_tokens(vocab, token_list, start_token, end_token, unk_token
 
 	res.append(end_token)
 	return res
-
-def display_results(token_list, probs):
-	for i in range(len(token_list)):
-		print("{0} => {1}".format(token_list[i], probs[i]))
 
 if __name__ == '__main__':
 	main()

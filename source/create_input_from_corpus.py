@@ -5,6 +5,7 @@
 import glob
 import argparse
 import os.path
+from six.moves import cPickle
 from sys import exit
 from collections import defaultdict
 
@@ -17,6 +18,7 @@ END_TOKEN = '<EOF>'
 TRAIN_FILE = 'train.txt'
 TEST_FILE = 'test.txt'
 TEST_TYPE_FILE = 'test_types.txt'
+TRAIN_TYPE_FILE = 'train_types.txt'
 
 def main():
 	parser = argparse.ArgumentParser()
@@ -30,11 +32,28 @@ def main():
 	                   help='vocabulary size. A value of -1 corresponds to a vocabulary size equal to the number unique tokens in the corpus')
 	parser.add_argument('--train_percent', type=float, default=.8,
 						help='Percent of files, (0 - 1) exclusive, in corpus to use for training')
+	parser.add_argument('--import_vocab_from', type=str,
+						help='Optional argument that allows you to use a pre existing vocabulary from a save directory')
 
 	args = parser.parse_args()
+
 	validate_args(args)
-	create_train_test_files(args.corpus_dir, args.corpus_ext, args.out_dir,
-		args.vocab_size, args.train_percent)
+	if args.import_vocab_from is not None:
+		vocab = load_vocab(args.import_vocab_from)
+		token_files = glob.glob("{0}/*{1}".format(args.corpus_dir, args.corpus_ext))
+		token_out_file = os.path.join(args.out_dir, "input.txt")
+		token_types_out_file = os.path.join(args.out_dir, "input_types.txt")
+		create_input_file(token_files, token_out_file, token_types_out_file, vocab)
+	else:
+		create_train_test_files(args.corpus_dir, args.corpus_ext, args.out_dir,
+			args.vocab_size, args.train_percent)
+
+def load_vocab(save_dir):
+	assert os.path.isdir(save_dir)," %s must be a a path" % save_dir
+	assert os.path.isfile(os.path.join(save_dir,"chars_vocab.pkl")),"chars_vocab.pkl.pkl file does not exist in path %s" % save_dir
+	with open(os.path.join(save_dir, 'chars_vocab.pkl'), 'rb') as f:
+		chars, vocab = cPickle.load(f)
+	return vocab
 
 def validate_args(args):
 	assert (args.train_percent > 0 and args.train_percent < 1), "train_percent must be in the range (0, 1) exclusive"
@@ -49,12 +68,12 @@ def create_train_test_files(corpus_dir, corpus_ext, out_dir, vocab_size, train_p
 
 	vocab = get_vocab(train_files, vocab_size)
 	train_out_file = os.path.join(out_dir, TRAIN_FILE)
+	train_type_out_file = os.path.join(out_dir, TRAIN_TYPE_FILE)
 	test_out_file = os.path.join(out_dir, TEST_FILE)
 	test_type_out_file = os.path.join(out_dir, TEST_TYPE_FILE)
-	create_input_file(train_files, train_out_file, vocab)
-	create_input_file(test_files, test_out_file, vocab)
-	write_token_types(test_out_file, test_type_out_file)
-	create_reversed_input_file(out_dir, train_out_file, test_out_file, test_type_out_file)
+	create_input_file(train_files, train_out_file, train_type_out_file, vocab)
+	create_input_file(test_files, test_out_file, test_type_out_file, vocab)
+	create_reversed_input_file(out_dir)
 
 def split_files(token_files, train_percent):
 	num_train_files = int(train_percent * len(token_files))
@@ -94,38 +113,55 @@ def create_vocab(token_freqs, vocab_size):
 	vocab_tokens = set(vocab_tokens)
 	return vocab_tokens
 
-def create_input_file(token_files, out_file, vocab):
-		with open(out_file, 'w') as f:
-			for token_file in token_files:
-				f.write(START_TOKEN + "\n")
-				with open(token_file, 'r') as tok_f:
-					for token in tok_f.read().split():
-						if token in vocab:
-							f.write(token + "\n")
-						else:
-							f.write(UNK_TOKEN + "\n")
-				f.write(END_TOKEN + "\n")
-
-def write_token_types(token_file, out_file):
+# Try to lex in batches
+def create_input_file(token_files, token_out_file, token_type_out_file, vocab):
 	lexer = get_lexer_by_name('C')
-	with open(out_file, 'w') as fout:
-		with open(token_file, 'r') as fin:
-			for line in fin:
-				token = line[:-1]
-				fout.write(get_token_type(lexer, token) + "\n")
+	with open(token_out_file, 'w') as token_out, open(token_type_out_file, 'w') as token_type_out:
+		for token_file in token_files:
+			token_out.write(START_TOKEN + "\n")
+			token_type_out.write('START_TOKEN' + "\n")
+			with open(token_file, 'r') as tok_f:
+				tokens = tok_f.read().split()
+				# token_types = get_token_types(tokens, lexer)
+				for token in tokens:
+					token_type_out.write(get_token_type(lexer, token) + "\n")
+					if token in vocab:
+						token_out.write(token + "\n")
+					else:
+						token_out.write(UNK_TOKEN + "\n")
+			token_out.write(END_TOKEN + "\n")
+			token_type_out.write("END_TOKEN" + "\n")
 
 def get_token_type(lexer, token):
-	if token == UNK_TOKEN:
-		return "Token.Name"
-	elif token == START_TOKEN:
+	if token == START_TOKEN:
 		return 'START_TOKEN'
 	elif token == END_TOKEN:
 		return 'END_TOKEN'
+	elif token == UNK_TOKEN:
+		return 'Token.Name'
+	elif token == '<int>':
+		return 'Token.Literal.Number.Integer'
+	elif token == '<float>':
+		return 'Token.Literal.Number.Float'
+	elif token == '<oct>':
+		return 'Token.Literal.Number.Oct'
+	elif token == '<bin>':
+		return 'Token.Literal.Number.Bin'
+	elif token == '<hex>':
+		return 'Token.Literal.Number.Hex'
+	elif token == '<num>':
+		return 'Token.Literal.Number'
+	elif token == '<str>':
+		return 'Token.Literal.String'
 	else:
 		res = lex(token, lexer)
 		return str(list(res)[0][0])
 
-def create_reversed_input_file(out_dir, orig_train_file, orig_test_file, orig_test_type_file):
+def create_reversed_input_file(out_dir):
+	orig_train_file = os.path.join(out_dir, TRAIN_FILE)
+	orig_train_type_file = os.path.join(out_dir, TEST_TYPE_FILE)
+	orig_test_file = os.path.join(out_dir, TEST_FILE)
+	orig_test_type_file = os.path.join(out_dir, TEST_TYPE_FILE)
 	rev_dir = os.path.join(out_dir, "rev")
 	rev_train = os.path.join(rev_dir, TRAIN_FILE)
 	rev_test = os.path.join(rev_dir, TEST_FILE)
