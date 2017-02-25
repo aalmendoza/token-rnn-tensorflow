@@ -13,6 +13,7 @@ import os
 from six.moves import cPickle
 
 from utils import TextLoader
+from utils import DistributionStats
 from model import Model
 
 from six import text_type
@@ -27,9 +28,9 @@ def main():
 					   help = 'token type file corresponding to the given token file')
 
 	args = parser.parse_args()
-	find_entropy_ranges(args)
+	get_entropy_stats_per_type(args)
 
-def find_entropy_ranges(args):
+def get_entropy_stats_per_type(args):
 	with open(os.path.join(args.save_dir, 'config.pkl'), 'rb') as f:
 		(saved_args_fwd, reverse_input_fwd) = cPickle.load(f)
 	with open(os.path.join(args.save_dir, 'chars_vocab.pkl'), 'rb') as f:
@@ -42,22 +43,10 @@ def find_entropy_ranges(args):
 		ckpt = tf.train.get_checkpoint_state(args.save_dir)
 		if ckpt and ckpt.model_checkpoint_path:
 			saver.restore(sess, ckpt.model_checkpoint_path)
-			entropy_map = model_fwd.get_entropy_range_by_type(sess, chars_fwd, vocab_fwd,
-				args.token_file, args.token_type_file)
-
-			i = 1
-			for key,value in entropy_map.items():
-				plt.subplot(3,4,i)
-				plt.boxplot(value, 0, 'gD')
-				plt.title(key)
-				i += 1
-			plt.show()
-			plt.tight_layout()
-			
-			# with open(os.path.join(args.save_dir, 'entropy_values.pkl'), 'wb') as f:
-			# 	cPickle.dump(entropy_map, f)
-			# for key, value in entropy_map.items():
-			# 	print("{0} -> {1}".format(key, value))
+			entropy_stats_map = model_fwd.get_entropy_stats_per_type(sess, chars_fwd, 
+				vocab_fwd, args.token_file, args.token_type_file)
+			with open(os.path.join(args.save_dir, 'entropy_stats_per_type.pkl'), 'wb') as f:
+				cPickle.dump(entropy_stats_map, f)
 
 if __name__ == '__main__':
 	main()
