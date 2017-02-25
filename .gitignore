@@ -26,5 +26,5 @@ wheels/
 *.egg
 
 # RNN save and input data
-source/data/
-source/save/
+data/
+save/

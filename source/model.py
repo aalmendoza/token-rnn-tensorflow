@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow.python.ops import rnn_cell
 from tensorflow.python.ops import seq2seq
 
-from utils import DistributionStats
+from utils.distribution_stats import DistributionStats
 
 from collections import defaultdict
 import numpy as np

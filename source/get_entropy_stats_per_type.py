@@ -12,8 +12,8 @@ import time
 import os
 from six.moves import cPickle
 
-from utils import TextLoader
-from utils import DistributionStats
+from utils.text_loader import TextLoader
+from utils.distribution_stats import DistributionStats
 from model import Model
 
 from six import text_type

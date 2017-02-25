@@ -88,8 +88,3 @@ class TextLoader():
 
 	def reset_batch_pointer(self):
 		self.pointer = 0
-
-class DistributionStats:
-	def __init__(self, mean, sd):
-		self.mean = mean
-		self.sd = sd

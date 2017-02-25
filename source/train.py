@@ -7,14 +7,14 @@ import time
 import os
 from six.moves import cPickle
 
-from utils import TextLoader
+from utils.text_loader import TextLoader
 from model import Model
 
 def main():
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--data_dir', type=str, default='data/code',
 					   help='data directory containing train.txt')
-	parser.add_argument('--save_dir', type=str, default='save',
+	parser.add_argument('--save_dir', type=str, default='save/code',
 					   help='directory to store checkpointed models')
 	parser.add_argument('--rnn_size', type=int, default=128,
 					   help='size of RNN hidden state')
