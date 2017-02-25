@@ -22,11 +22,11 @@ TRAIN_TYPE_FILE = 'train_types.txt'
 
 def main():
 	parser = argparse.ArgumentParser()
-	parser.add_argument('--corpus_dir', type=str, default='../C_Corpus',
+	parser.add_argument('--corpus_dir', type=str, default='../../C_Corpus',
 	                   help='directory of corpus containing tokenized code')
 	parser.add_argument('--corpus_ext', type=str, default='.c.tokens',
 	                   help='extension of files in corpus')
-	parser.add_argument('--out_dir', type=str, default='data/code/',
+	parser.add_argument('--out_dir', type=str, default='../../data/code/',
 	                   help='output directory for tokenized file and logs')
 	parser.add_argument('--vocab_size', type=int, default=-1,
 	                   help='vocabulary size. A value of -1 corresponds to a vocabulary size equal to the number unique tokens in the corpus')

@@ -2,6 +2,8 @@ import tensorflow as tf
 from tensorflow.python.ops import rnn_cell
 from tensorflow.python.ops import seq2seq
 
+from utils.distribution_stats import DistributionStats
+
 from collections import defaultdict
 import numpy as np
 from scipy import stats
@@ -127,12 +129,12 @@ class Model():
 		return token_probs[:-1]
 
 	# reinit state after every new program?
-	def get_entropy_range_by_type(self, sess, chars, vocab, token_file, token_type_file):
+	def get_entropy_stats_per_type(self, sess, chars, vocab, token_file, token_type_file):
 		entropy_map = defaultdict(list)
 		state = sess.run(self.cell.zero_state(1, tf.float32))
 		total_entropy = 0
 
-		num_iterations = 10000
+		num_iterations = 1000
 		limit = num_iterations
 
 		with open(token_file, 'r') as token_f, open(token_type_file, 'r') as token_type_f:
@@ -163,11 +165,18 @@ class Model():
 
 				limit -= 1
 		print("Average entropy: {0}".format(total_entropy / num_iterations))
-		entropy_zscore_map = defaultdict(int)
-		for key,value in entropy_map.items():
-			print("{0}: {1}".format(key, np.mean(value)))
-			if len(value) > 1:
-				entropy_zscore_map[key] = stats.zscore(value)
-			else:
-				entropy_zscore_map[key] = [0]
-		return entropy_zscore_map
+		entropy_stats_map = {}
+		for token_type, dist in entropy_map.items():
+			mean = np.mean(dist)
+			sd = np.std(dist)
+			entropy_stats_map[token_type] = DistributionStats(mean, sd)
+		return entropy_stats_map
+
+		# entropy_zscore_map = defaultdict(int)
+		# for key,value in entropy_map.items():
+		# 	print("{0}: {1}".format(key, np.mean(value)))
+		# 	if len(value) > 1:
+		# 		entropy_zscore_map[key] = stats.zscore(value)
+		# 	else:
+		# 		entropy_zscore_map[key] = [0]
+		# return entropy_zscore_map
