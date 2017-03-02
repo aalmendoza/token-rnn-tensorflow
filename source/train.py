@@ -12,9 +12,9 @@ from model import Model
 
 def main():
 	parser = argparse.ArgumentParser()
-	parser.add_argument('--data_dir', type=str, default='data/code',
+	parser.add_argument('--data_dir', type=str, default='../data/code',
 					   help='data directory containing train.txt')
-	parser.add_argument('--save_dir', type=str, default='save/code',
+	parser.add_argument('--save_dir', type=str, default='../save/code',
 					   help='directory to store checkpointed models')
 	parser.add_argument('--rnn_size', type=int, default=128,
 					   help='size of RNN hidden state')
