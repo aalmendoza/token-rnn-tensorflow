@@ -7,10 +7,7 @@ Created on Oct 12, 2015
 '''
 from pygments.token import *
 from collections import OrderedDict
-import lexer.Android as Android
-import lexer.Api as Api
 import csv
-# from sets import Set
 import re
 
 SUPPORTED_LANGUAGE_STRINGS = {
@@ -213,6 +210,9 @@ def singleStringToken(strToken):
 
 #Handles the case where there are baskslahes in the string to reduce to a single item.
 def collapseStrings(tokens):
+    if len(tokens) == 0:
+        return []
+
     newTokens = []
     newTokens.append(tokens[0])
     for t in tokens[1:]:
@@ -274,28 +274,6 @@ def singleNameToken(nameToken):
         print(nameToken)
         return nameToken
 
-
-#Not really needed, the problem is coming from minimized JS code...
-#def mergeDollarSign(tokens):
-#    newTokens = []
-#    dollarFound = False
-#    for t in tokens:
-#        if(t[0] == Token.Name.Other):
-#            dollarFound = True
-#        elif(dollarFound):
-#            assert(is_token_subtype(t, Token.Name))
-#            newTokens.append(t[0], "$" + t[1])
-#            dollarFound = False
-#        else:
-#            newTokens.append(t)
-#    return newTokens
-
-#string string -> string
-#Break up the combined Namespace tokens
-#Example: org . apache . xalan . xsltc . trax ->
-#<org|Token.Name.Namespace> <.|Token.Punctuation> <apache|Token.Name.Namespace> <.|Token.Punctuation> <xalan|Token.Name.Namespace> 
-#<.|Token.Punctuation> <xsltc|Token.Name.Namespace> <.|Token.Punctuation> <trax|Token.Name.Namespace>
-#Note: In clojure, this behavior can be seen in Token.Name.Variable (
 def convertNamespaceToken(text, tokenType):
     #assert(tokenType == "Token.Name.Namespace" or tokenType == "Android.Namespace")
     pieces = text.split(" ")
@@ -310,8 +288,7 @@ def convertNamespaceToken(text, tokenType):
 def convertNamespaceTokens(tokens, language):
     newTokens = []
     for t in tokens:
-        #Clojure made need this for functions too?
-        if(t[0] == Token.Name.Namespace or t[0] == Android.Namespace):# or (language == "Clojure" and t[0] == Token.Name.Variable and "." in t[1])):
+        if(t[0] == Token.Name.Namespace):
             pieces = t[1].split(".")
             i = 0
             for p in pieces:
@@ -442,203 +419,10 @@ def fixTypes(tokens, language):
         print("No type remap for this language implemented")
         return tokens  
 
-def insertToApiDict(packages, api_package, api_class, api_method):
-    if(api_package in packages):
-        if(api_class in packages[api_package]):
-            packages[api_package][api_class].append(api_method)
-        else:
-            packages[api_package][api_class] = [api_method]
-    else:
-        packages[api_package] = {api_class:[api_method]}
-
-    return packages
-
-#Read in the csv file with the android api list
-#csv file should be in decreasing order of package string length.
-def parseAndroidApis():
-    packages = OrderedDict()
-    with open(Android.ANDROID_API_FILE, 'r') as csvfile:
-        csvreader = csv.reader(csvfile, delimiter=';', quotechar='\"')
-        for line in csvreader:
-            (api_package, api_class, api_method) = line
-            packages = insertToApiDict(packages, api_package, api_class, api_method)
-
-    return packages
-
 #If we've merge a token and its type like <"Token"|Type>, return "Token"
 def removeLabel(tokenString):
     if("|Token." in tokenString):
         tokenString = tokenString[1:-1]
         return tokenString[:tokenString.rfind("|Token")]
     else: #Ignore unlabeled tokens
-        return tokenString
-
-#list of tokens -> list of tokens
-#Given a list of tokens (label, string), from pygments, read in a file of android
-#api information and change the token labels of all android api references to 
-#Android.*
-def labelAndroidTypes(tokens):
-    #Read in File (assumed to be a csv file of "package, file, method")
-    androidDict = parseAndroidApis() #Dict of Dict (key1 = package, key2 = file)
-    #Check references only from the packages loaded in the imports (assumed to be first)
-    validPackages = [] #List of imported packages
-    newTokens = []
-    for t in tokens:
-        found = False
-        if(t[0] == Token.Name.Namespace):
-            for package in androidDict.keys():
-                if(package in t[1]):
-                    validPackages.append(package)
-                    newTokens.append((Android.Namespace, t[1]))
-                    found = True
-                    break
-        elif(t[0] == Token.Name): #If in valid packages and in android Dict, relabel to Android.*
-            #Looking for classes here. This covers things referenced in code and extended classes
-            #e.g. "class <A|Token.Name.Class> extends <B|Token.Name>"
-            for package in validPackages:
-               if(t[1] in androidDict[package]):
-                   newTokens.append((Android.Name, t[1]))
-                   found = True
-                   break
-   
-        elif(t[0] == Token.Name.Function or t[0] == Token.Name.Attribute):
-            for package in validPackages:
-               for api_class in androidDict[package]:
-                   if(t[1] in androidDict[package][api_class]):
-                       newTokens.append((Android.Function, t[1]))
-                       found = True
-                       break
-               if(found):
-                   break
-        else:
-            newTokens.append(t)  
-            found = True
-        
-        if(not found):
-            newTokens.append(t) 
-
-    return newTokens
-
-#list of tokens -> set of definitions
-#Given a list of tokens created by pygments, for each token
-#marked with the function label, identify if it is a function
-#definition.  Return the list of tokens with the new label
-#breaking them up into definitions and calls, along with a 
-#set of new function definitions
-def getFunctionDefinitions(tokens, language):
-    #TODO:
-    #What patterns signify a function definition?
-    #--------------------------------------- Java ---------------------------------------
-    #YES: Token.Keyword.Type -> Token.Name.Function
-    #NO: Token.Keyword.Operator -> Token.Name.Function.
-    #NO: Token.Operator -> Token.Name.Function.
-    #YES: Token.Keyword.Declaration, Token.Name -> Token.Name.Function (function with more complex type)
-    #Constructor: Token.Keyword.Declaration -> Token.Name.Function
-    #What other possbilities are there?
-    #Others:  (YES) Token.Operator, Token.Name -> Token.Name.Function
-    #(YES) Token.Name.Decorator, Token.Name -> Token.Name.Function
-    # (YES) (Token.Operator, u'.') (Token.Name.Attribute, u'Unsafe') (Token.Name.Function, u'getUnsafe') (YES?)
-    # --------------------------------------- Haskell ---------------------------------------
-    # ???
-    definitions = Set()
-    if(language.lower() == "java"):
-        for i in range(0, len(tokens)):
-            if(tokens[i][0] == Token.Name.Function):
-                if(tokens[i-1][0] == Token.Name or tokens[i-1][0] == Token.Keyword.Type or tokens[i-1][0] == Token.Name.Attribute or tokens[i-1][0] == Token.Keyword.Declaration):
-                    definitions.add(tokens[i])
-                elif(tokens[i-1][0] != Token.Keyword.Operator and tokens[i-1][0] != Token.Operator):
-                    print("Not Found")
-                    print(str(tokens[i-2]) + " " + str(tokens[i-1]) + " " + str(tokens[i]) + " " + str(tokens[i+1]) + " " + str(tokens[i+2]))
-    elif(language.lower() == "haskell"):
-         for i in range(0, len(tokens)):
-            if(tokens[i][0] == Token.Name.Function):
-                print(str(tokens[i][0]) + " " + str(tokens[i+1][0]) + " " + str(tokens[i+2][0]) + " " +  str(tokens[i+3][0]) + " " + str(tokens[i+4][0]))
-                print(str(tokens[i][1]) + " " + str(tokens[i+1][1]) + " " + str(tokens[i+2][1])+ " " +  str(tokens[i+3][1]) + " " + str(tokens[i+4][1]))
-                # Function followed by '::' token must be definition, should there be anymore, or just group the names rather than calls?
-                # No, problem is that in haskell, these can be variables too. So must also have a -> further on? (Lexer mistakenly labels these as function types too... 
-    
-    #print(definitions)
-    return definitions
-    
-
-#list of tokens, set of definitions, string -> list of tokens
-#Given a file's list of tokens where the function labels 
-#have been divided as per getFunctionDefinitions, the language of the corpus, and the 
-#set of all functions defined in this project, relabel all
-#function calls as being from either inside or outside the 
-#project. (e.g. what function calls are from external libraries).
-#TODO: Handle more than Java
-#TODO: I see function calls being labelled as NAME, not function.  This is a problem.
-#Convert string sequences of "Token.Name, ("
-def relabelFunctions(tokens, funcDefinitions, language):
-    newTokens = []
-    j = 0
-    if(language.lower() == "java"):
-        for i in range(0, len(tokens)):
-            if(i <= j): #Skip ahead if we did a rewrite of a constructor with "."'s in it.
-                continue
-            if(tokens[i][0] == Token.Name.Function):
-                if(tokens[i-1][0] == Token.Name or tokens[i-1][0] == Token.Keyword.Type or tokens[i-1][0] == Token.Name.Attribute or tokens[i-1][0] == Token.Keyword.Declaration):
-                    newTokens.append((Api.Definition , tokens[i][1]))
-                elif(tokens[i-1][0] == Token.Keyword.Operator or tokens[i-1][0] == Token.Operator):
-                    if(tokens[i][1] in funcDefinitions):
-                        newTokens.append((Api.Internal, tokens[i][1]))
-                    else:
-                        newTokens.append((Api.External, tokens[i][1]))
-                else:
-                    print("Not recognized.")
-                    print(tokens[i-1])
-                    quit()
-            elif(tokens[i][0] == Token.Name and tokens[i-1][1] == "new"): #Constructor Case
-                #print("Constructor Case")
-                j = i
-                while(tokens[j + 2][0] == Token.Name.Attribute): #Deal with constructor calls like com.google.common.primitives.ByteTest
-                    j += 2
-                if(j != i):
-                    newType = ""
-                    if(tokens[j][1] in funcDefinitions):
-                        newType = Api.Internal
-                    else:    
-                        newType = Api.External
-
-                    for k in range(i, j+1):
-                        if(tokens[k][0] == Token.Name.Attribute or tokens[k][0] == Token.Name):
-                            newTokens.append((newType, tokens[k][1]))
-                        elif(tokens[k][0] == Token.Operator):
-                            newTokens.append(tokens[k])
-                        else:
-                            print("Not valid type (relabelFunctions): " + str(tokens[k]))
-                            quit()
-                else:
-                    #print(tokens[i])
-                    if(tokens[i][1] in funcDefinitions):
-                        newTokens.append((Api.Internal, tokens[i][1]))
-                    else:
-                        newTokens.append((Api.External, tokens[i][1]))
-            elif(is_token_subtype(tokens[i][0], Token.Name) and tokens[i+1][1] == "("): #Multiple name types can could be functions
-                 #print(tokens[i-2][1] + " " + tokens[i-1][1] + " " + tokens[i][1] + " " + tokens[i+1][1] + " " + tokens[i+2][1])
-                 #print(" ".join([str(tokens[i-2][0]), str(tokens[i-1][0]), str(tokens[i][0]), str(tokens[i+1][0]), str(tokens[i+2][0])]))
-                 #newTokens.append(tokens[i])
-                 if(tokens[i][1] in funcDefinitions):
-                     newTokens.append((Api.Internal, tokens[i][1]))
-                 else:
-                     newTokens.append((Api.External, tokens[i][1]))     
-            #elif(tokens[i][0] == Token.Name):
-            #     print(tokens[i-2][1] + " " + tokens[i-1][1] + " " + tokens[i][1] + " " + tokens[i+1][1] + " " + tokens[i+2][1])
-            #     print(" ".join([str(tokens[i-2][0]), str(tokens[i-1][0]), str(tokens[i][0]), str(tokens[i+1][0]), str(tokens[i+2][0])]))
-            #     newTokens.append(tokens[i])    
-            else:
-                newTokens.append(tokens[i])
-    elif(language.lower() == "haskell"):
-         print("Not supported yet.")
-         quit()
-         #for i in range(0, len(tokens)):
-         #   if(tokens[i][0] == Token.Name.Function):
-         #       print(str(tokens[i-2]) + " " + str(tokens[i-1]) + " " + str(tokens[i]) + " " + str(tokens[i+1]) + " " + str(tokens[i+2]))
-    else:
-        print("Not supported yet.")
-        quit()
-
-    return newTokens
-
-            
+        return tokenString            
