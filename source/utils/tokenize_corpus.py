@@ -31,8 +31,8 @@ def tokenize_corpus(corpus_dir, corpus_ext, out_dir):
 	i = 0
 	for file in corpus_files:
 		tokenized_text, token_types = simplePyLex.tokenize_file(file, 3)
-		tokenized_file = "{0}/{1}{2}".format(out_dir, i, corpus_ext)
-		token_types_file = "{0}/{1}{2}.types.pkl".format(out_dir, i, corpus_ext)
+		tokenized_file = os.path.join(out_dir, "{0}{1}".format(i, corpus_ext))
+		token_types_file = os.path.join(out_dir, "{0}{1}.types.pkl".format(i, corpus_ext))
 		with open(tokenized_file, 'w') as f:
 			f.write(tokenized_text)
 		with open(token_types_file, 'wb') as f:
