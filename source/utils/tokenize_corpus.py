@@ -8,11 +8,11 @@ from pygments import lex
 
 def main():
 	parser = argparse.ArgumentParser()
-	parser.add_argument('--corpus_dir', type=str, default='../../C_Corpus',
+	parser.add_argument('corpus_dir', type=str,
 	                   help='directory of corpus containing files to be tokenized')
-	parser.add_argument('--corpus_ext', type=str, default='.c',
+	parser.add_argument('corpus_ext', type=str, default='.c',
 	                   help='extension of files in corpus')
-	parser.add_argument('--out_dir', type=str, default='../../data/code/files',
+	parser.add_argument('out_dir', type=str, default='../../data/code/files',
 	                   help='output directory for tokenized files')
 
 	args = parser.parse_args()
@@ -34,7 +34,7 @@ def tokenize_corpus(corpus_dir, corpus_ext, out_dir):
 		with open(tokenized_file, 'w') as f:
 			f.write(tokenized_text)
 
-		print(i)
+		print("{0} -> {1}".format(file, tokenized_file))
 		i += 1
 
 if __name__ == '__main__':
