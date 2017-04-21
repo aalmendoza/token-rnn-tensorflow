@@ -1,14 +1,11 @@
 import tensorflow as tf
-# from tensorflow.python.ops import rnn_cell
 from tensorflow.contrib import rnn
 from tensorflow.contrib import legacy_seq2seq
-# from tensorflow.python.ops import seq2seq
 
 from utils.distribution_stats import DistributionStats
 
 from collections import defaultdict
 import numpy as np
-from scipy import stats
 
 class Model():
 	def __init__(self, args, reverse_input, infer=False):
@@ -27,13 +24,10 @@ class Model():
 			args.seq_length = 1
 
 		if args.model == 'rnn':
-			# cell_fn = rnn_cell.BasicRNNCell
 			cell_fn = rnn.BasicRNNCell
 		elif args.model == 'gru':
-			# cell_fn = rnn_cell.GRUCell
 			cell_fn = rnn.GRUCell
 		elif args.model == 'lstm':
-			# cell_fn = rnn_cell.BasicLSTMCell
 			cell_fn = rnn.BasicLSTMCell
 		else:
 			raise Exception("model type not supported: {}".format(args.model))
@@ -132,56 +126,3 @@ class Model():
 			print("Predicted next token: {0}, Prob: {1}\n".format(chars[np.argmax(prob_dist)], np.max(prob_dist)))
 		print("Average entropy: {0}".format(total_entropy / (len(token_list) - 1)))
 		return token_probs[:-1]
-
-	# reinit state after every new program?
-	def get_entropy_stats_per_type(self, sess, chars, vocab, token_file, token_type_file):
-		entropy_map = defaultdict(list)
-		state = sess.run(self.cell.zero_state(1, tf.float32))
-		total_entropy = 0
-
-		num_iterations = 1000
-		limit = num_iterations
-
-		with open(token_file, 'r') as token_f, open(token_type_file, 'r') as token_type_f:
-			token = token_f.readline()[:-1]
-			token_type = token_type_f.readline()[:-1]
-			i = 1
-			while True:
-				next_token = token_f.readline()[:-1]
-				next_token_type = token_type_f.readline()[:-1]
-				if not next_token: break
-
-				if limit <= 0: break
-
-				x = np.zeros((1, 1))
-				x[0, 0] = vocab[token]
-				feed = {self.input_data: x, self.initial_state:state}
-				[probs, state] = sess.run([self.probs, self.final_state], feed)
-				prob_dist = probs[0]
-				prob_next_token = prob_dist[vocab[next_token]]
-				entropy = -1.0 * np.log2(prob_next_token)
-				total_entropy += entropy
-				entropy_map[next_token_type].append(entropy)
-
-				token = next_token
-				token_type = next_token_type
-				print(i)
-				i+=1
-
-				limit -= 1
-		print("Average entropy: {0}".format(total_entropy / num_iterations))
-		entropy_stats_map = {}
-		for token_type, dist in entropy_map.items():
-			mean = np.mean(dist)
-			sd = np.std(dist)
-			entropy_stats_map[token_type] = DistributionStats(mean, sd)
-		return entropy_stats_map
-
-		# entropy_zscore_map = defaultdict(int)
-		# for key,value in entropy_map.items():
-		# 	print("{0}: {1}".format(key, np.mean(value)))
-		# 	if len(value) > 1:
-		# 		entropy_zscore_map[key] = stats.zscore(value)
-		# 	else:
-		# 		entropy_zscore_map[key] = [0]
-		# return entropy_zscore_map
