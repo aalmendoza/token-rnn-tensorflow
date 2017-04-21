@@ -27,8 +27,8 @@ def main():
 def sample(args):
 	with open(os.path.join(args.save_dir, 'config.pkl'), 'rb') as f:
 		(saved_args, reverse_input) = cPickle.load(f)
-	with open(os.path.join(args.save_dir, 'chars_vocab.pkl'), 'rb') as f:
-		chars, vocab = cPickle.load(f)
+	with open(os.path.join(args.save_dir, 'token_vocab.pkl'), 'rb') as f:
+		tokens, vocab = cPickle.load(f)
 	model = Model(saved_args, reverse_input, True)
 	with tf.Session() as sess:
 		sess.run(tf.global_variables_initializer())
@@ -36,7 +36,7 @@ def sample(args):
 		ckpt = tf.train.get_checkpoint_state(args.save_dir)
 		if ckpt and ckpt.model_checkpoint_path:
 			saver.restore(sess, ckpt.model_checkpoint_path)
-			print(model.sample(sess, chars, vocab, args.max_tokens, args.sample))
+			print(model.sample(sess, tokens, vocab, args.max_tokens, args.sample))
 
 if __name__ == '__main__':
 	main()

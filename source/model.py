@@ -71,7 +71,7 @@ class Model():
 		self.train_op = optimizer.apply_gradients(zip(grads, tvars))
 
 
-	def sample(self, sess, chars, vocab, max_tokens = 500, sampling_type=1):
+	def sample(self, sess, tokens, vocab, max_tokens = 500, sampling_type=1):
 		state = sess.run(self.cell.zero_state(1, tf.float32))
 		cur_tok = self.start_token
 		ret = ""
@@ -91,14 +91,14 @@ class Model():
 			if sampling_type == 0:
 				sample = np.argmax(p)
 			elif sampling_type == 2:
-				if char == ' ':
+				if token == ' ':
 					sample = weighted_pick(p)
 				else:
 					sample = np.argmax(p)
 			else: # sampling_type == 1 default:
 				sample = weighted_pick(p)
 
-			pred = chars[sample]
+			pred = tokens[sample]
 			if pred == self.end_token:
 				break
 
@@ -107,7 +107,7 @@ class Model():
 		return ret
 
 
-	def evaluate(self, sess, chars, vocab, token_list):
+	def evaluate(self, sess, tokens, vocab, token_list):
 		token_probs = []
 		state = sess.run(self.cell.zero_state(1, tf.float32))
 		total_entropy = 0
@@ -123,6 +123,6 @@ class Model():
 			token_probs.append(prob_next_token)
 			print("Current token: {0}".format(token_list[n]))
 			print("Next token: {0}, Entropy: {1}, Prob: {2}".format(token_list[n+1], entropy_next_token, prob_next_token))
-			print("Predicted next token: {0}, Prob: {1}\n".format(chars[np.argmax(prob_dist)], np.max(prob_dist)))
+			print("Predicted next token: {0}, Prob: {1}\n".format(tokens[np.argmax(prob_dist)], np.max(prob_dist)))
 		print("Average entropy: {0}".format(total_entropy / (len(token_list) - 1)))
 		return token_probs[:-1]

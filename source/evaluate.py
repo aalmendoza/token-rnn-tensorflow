@@ -29,8 +29,8 @@ def evaluate(args):
 	pre_tokenized = str2bool(args.pre_tokenized)
 	with open(os.path.join(args.save_dir, 'config.pkl'), 'rb') as f:
 		(saved_args, reverse_input) = cPickle.load(f)
-	with open(os.path.join(args.save_dir, 'chars_vocab.pkl'), 'rb') as f:
-		chars, vocab = cPickle.load(f)
+	with open(os.path.join(args.save_dir, 'token_vocab.pkl'), 'rb') as f:
+		tokens, vocab = cPickle.load(f)
 	model = Model(saved_args, reverse_input, True)
 	with tf.Session() as sess:
 		sess.run(tf.global_variables_initializer())
@@ -46,7 +46,7 @@ def evaluate(args):
 				
 			token_list = convert_to_vocab_tokens(vocab, token_list, model.start_token,
 				model.end_token, model.unk_token)
-			probs = model.evaluate(sess, chars, vocab, token_list)
+			probs = model.evaluate(sess, tokens, vocab, token_list)
 
 def str2bool(s):
 	return s.lower() in ('t', 'true', '1', 'yes')

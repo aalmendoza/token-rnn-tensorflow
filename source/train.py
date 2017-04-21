@@ -39,7 +39,7 @@ def main():
 	parser.add_argument('--init_from', type=str, default=None,
 					   help="""continue training from saved model at this path. Path must contain files saved by previous training process: 
 							'config.pkl'        : configuration;
-							'chars_vocab.pkl'   : vocabulary definitions;
+							'token_vocab.pkl'   : vocabulary definitions;
 							'checkpoint'        : paths to model file(s) (created by tf).
 												  Note: this file contains absolute paths, be careful when moving files around;
 							'model.ckpt-*'      : file(s) with model definition (created by tf)
@@ -63,7 +63,7 @@ def train(args):
 		# check if all necessary files exist 
 		assert os.path.isdir(args.init_from)," %s must be a a path" % args.init_from
 		assert os.path.isfile(os.path.join(args.init_from,"config.pkl")),"config.pkl file does not exist in path %s"%args.init_from
-		assert os.path.isfile(os.path.join(args.init_from,"chars_vocab.pkl")),"chars_vocab.pkl.pkl file does not exist in path %s" % args.init_from
+		assert os.path.isfile(os.path.join(args.init_from,"token_vocab.pkl")),"token_vocab.pkl.pkl file does not exist in path %s" % args.init_from
 		ckpt = tf.train.get_checkpoint_state(args.init_from)
 		assert ckpt,"No checkpoint found"
 		assert ckpt.model_checkpoint_path,"No model path found in checkpoint"
@@ -76,22 +76,21 @@ def train(args):
 			assert vars(saved_model_args)[checkme]==vars(args)[checkme],"Command line argument and saved model disagree on '%s' "%checkme
 		
 		# open saved vocab/dict and check if vocabs/dicts are compatible
-		with open(os.path.join(args.init_from, 'chars_vocab.pkl')) as f:
-			saved_chars, saved_vocab = cPickle.load(f)
-		assert saved_chars==data_loader.chars, "Data and loaded model disagree on character set!"
+		with open(os.path.join(args.init_from, 'token_vocab.pkl')) as f:
+			saved_tokens, saved_vocab = cPickle.load(f)
+		assert saved_tokens==data_loader.tokens, "Data and loaded model disagree on token set!"
 		assert saved_vocab==data_loader.vocab, "Data and loaded model disagree on dictionary mappings!"
 		
 	with open(os.path.join(args.save_dir, 'config.pkl'), 'wb') as f:
 		cPickle.dump((args, reverse_input), f)
-	with open(os.path.join(args.save_dir, 'chars_vocab.pkl'), 'wb') as f:
-		cPickle.dump((data_loader.chars, data_loader.vocab), f)
+	with open(os.path.join(args.save_dir, 'token_vocab.pkl'), 'wb') as f:
+		cPickle.dump((data_loader.tokens, data_loader.vocab), f)
 		
 	model = Model(args, reverse_input)
 
 	with tf.Session() as sess:
 		sess.run(tf.global_variables_initializer())
 		saver = tf.train.Saver(tf.global_variables())
-		# restore model
 		if args.init_from is not None:
 			saver.restore(sess, ckpt.model_checkpoint_path)
 		for e in range(args.num_epochs):
