@@ -27,7 +27,7 @@ def validate_args(args):
 		os.system("mkdir -p {0}".format(args.out_dir))
 
 def tokenize_corpus(corpus_dir, corpus_ext, out_dir):
-	corpus_files = glob.glob("{0}/*{1}".format(corpus_dir, corpus_ext))
+	corpus_files = glob.glob("{0}/**/*{1}".format(corpus_dir, corpus_ext), recursive=True)
 	i = 0
 	for file in corpus_files:
 		tokenized_text, token_types = simplePyLex.tokenize_file(file, 3)
