@@ -28,38 +28,39 @@ class TextLoader():
 		self.create_batches()
 		self.reset_batch_pointer()
 
+	# Create vocabulary from input file
 	def preprocess(self, input_file, vocab_file, tensor_file):
 		contains_unk_token = False
 		data = []
 		with codecs.open(input_file, "r", encoding=self.encoding, errors='ignore') as f:
 			for line in f:
-				line_stripped = line[:-1]
-				if line_stripped == UNK_TOKEN:
-					contains_unk_token = True
-				data.append(line_stripped)
+				for token in line.split():
+					if token == UNK_TOKEN:
+						contains_unk_token = True
+					data.append(token)
 
 		# counter is a map from tokens to its frequency
 		counter = collections.Counter(data)
 		# count_pairs contains the tokens sorted by frequency then lexicographically
 		count_pairs = sorted(counter.items(), key=lambda x: -x[1])
-		self.chars, _ = zip(*count_pairs)
+		self.tokens, _ = zip(*count_pairs)
 		if not contains_unk_token:
-			self.chars = self.chars + (UNK_TOKEN,)
+			self.tokens = self.tokens + (UNK_TOKEN,)
 
-		self.vocab_size = len(self.chars)
+		self.vocab_size = len(self.tokens)
 		# vocab is a map from a token to a unique id
-		self.vocab = dict(zip(self.chars, range(len(self.chars))))
+		self.vocab = dict(zip(self.tokens, range(len(self.tokens))))
 		with open(vocab_file, 'wb') as f:
-			cPickle.dump(self.chars, f)
+			cPickle.dump(self.tokens, f)
 		# tensor is the input file converted to ids given by mapping of vocab
 		self.tensor = np.array(list(map(self.vocab.get, data)))
 		np.save(tensor_file, self.tensor)
 
 	def load_preprocessed(self, vocab_file, tensor_file):
 		with open(vocab_file, 'rb') as f:
-			self.chars = cPickle.load(f)
-		self.vocab_size = len(self.chars)
-		self.vocab = dict(zip(self.chars, range(len(self.chars))))
+			self.tokens = cPickle.load(f)
+		self.vocab_size = len(self.tokens)
+		self.vocab = dict(zip(self.tokens, range(len(self.tokens))))
 		self.tensor = np.load(tensor_file)
 		self.num_batches = int(self.tensor.size / (self.batch_size *
 												   self.seq_length))
