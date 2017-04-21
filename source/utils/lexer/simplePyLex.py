@@ -3,6 +3,7 @@ from pygments.lexers import get_lexer_for_filename, get_lexer_by_name, guess_lex
 from pygments import lex
 import re
 import argparse
+import codecs
 
 # Tokenize the code such that line information is kept
 # Returns the tokenized code as a string along with the
@@ -69,8 +70,11 @@ def tokenize_code(code, literal_option, lexer):
 #   3 -> collapse strings to <str> and collapses numbers to a type as well.
 def tokenize_file(source_file, literal_option):
     code = ""
-    with open(source_file, 'r') as f:
-        code = ''.join(f.readlines())
+    try:
+        with codecs.open(source_file, "r",encoding='utf-8', errors='ignore') as f:
+            code = f.read()
+    except UnicodeDecodeError:
+        return '', []
 
     lexer = get_lexer_for_filename(source_file)
     return tokenize_code(code, literal_option, lexer)
