@@ -4,35 +4,37 @@ from pygments import lex
 import re
 import argparse
 
-# Keep Lines?
+# Tokenize the code such that line information is kept
+# Returns the tokenized code as a string along with the
+# corresponding types of each token
 def get_tokenization(lexedWoComments):
-    res = ''
+    tokenized_string = ''
+    token_types = []
     curr_line_empty = True
     for t in lexedWoComments:
+        token_type = str(t[0])
         token = t[1]
         token_stripped = token.strip()
 
         if '\n' in token:
             if curr_line_empty:
                 if t[0] != Token.Text and token_stripped != '':
-                    res += token_stripped + "\n"
+                    tokenized_string += token_stripped + "\n"
+                    token_types.append(token_type)
             else:
-                res += token_stripped + "\n"
+                tokenized_string += token_stripped + "\n"
             curr_line_empty = True
         elif t[0] == Token.Text:
             continue
         else:
             curr_line_empty = False
-            res += token + ' '
+            tokenized_string += token + ' '
+            token_types.append(token_type)
 
-    return res
+    return tokenized_string, token_types
 
-def tokenize_code(code, literal_handle=3, language=None):
-    if language is None:
-        lexer = guess_lexer(code)
-    else:
-        lexer = get_lexer_by_name(language)
-
+def tokenize_code(code, literal_option, lexer):
+    language = languageForLexer(lexer)
     tokens = lex(code, lexer)
     tokensList = list(tokens)
 
@@ -42,39 +44,29 @@ def tokenize_code(code, literal_handle=3, language=None):
     lexedWoComments = fixTypes(lexedWoComments, language) #Alter the pygments lexer types to be more comparable between our languages
     lexedWoComments = convertNamespaceTokens(lexedWoComments, language)
 
-    if(literal_handle == 0):
+    if(literal_option == 0):
         lexedWoComments = modifyStrings(lexedWoComments, underscoreString)
-    elif(literal_handle == 1):
+    elif(literal_option == 1):
         lexedWoComments = modifyStrings(lexedWoComments, singleStringToken)
-    elif(literal_handle == 2):
+    elif(literal_option == 2):
         lexedWoComments = modifyStrings(lexedWoComments, spaceString)
-    elif(literal_handle == 3):
+    elif(literal_option == 3):
         lexedWoComments = modifyStrings(lexedWoComments, singleStringToken)
         lexedWoComments = collapseStrings(lexedWoComments)
         lexedWoComments = modifyNumbers(lexedWoComments, singleNumberToken)
 
     return get_tokenization(lexedWoComments)
 
-# Weird to go from lexer to language back to lexer
-def tokenize_file(source_file, literal_handle):
+# source_file: path of source file to be tokenized
+# literal_option:
+#   0 -> replace all spaces in strings with _
+#   1 -> replace all strings with a <str> tag
+#   2 -> add spaces to the ends of the strings
+#   3 -> collapse strings to <str> and collapses numbers to a type as well.
+def tokenize_file(source_file, literal_option):
     code = ""
     with open(source_file, 'r') as f:
         code = ''.join(f.readlines())
 
     lexer = get_lexer_for_filename(source_file)
-    language = languageForLexer(lexer)
-    return tokenize_code(code, literal_handle, language)
-    
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument('--source_file', type=str,
-                       help='source file to be tokenized')
-    parser.add_argument('--literal_handle', type=int, default=3,
-                       help="0 -> replace all spaces in strings with _\n"
-                            "1 -> replace all strings with a <str> tag\n"
-                            "2 -> add spaces to the ends of the strings\n"
-                            "3 -> collapse strings to <str> and collapses numbers to a type as well.\n")
-
-    args = parser.parse_args()
-    lexed = tokenize_file(args.source_file, args.literal_handle)
-    print(lexed)
+    return tokenize_code(code, literal_option, lexer)
