@@ -1,5 +1,5 @@
 # token-rnn-tensorflow
-Token level LSTM language model for any given tokenized code corpus. 
+Token level RNN language model for any given code corpus.
 
 ## Dependencies
 
