@@ -3,11 +3,7 @@ import argparse
 import os.path
 from math import ceil
 from six.moves import cPickle
-from sys import exit
 from collections import defaultdict
-
-from pygments.lexers import get_lexer_by_name
-from pygments import lex
 
 UNK_TOKEN = '<UNK>'
 START_TOKEN = '<START>'
@@ -21,22 +17,22 @@ VALID_TYPE_FILE = 'valid_types.txt'
 
 def main():
 	parser = argparse.ArgumentParser()
-	parser.add_argument('--corpus_dir', type=str, default='../../C_Corpus',
-	                   help='directory of corpus containing tokenized code')
-	parser.add_argument('--corpus_ext', type=str, default='.c.tokens',
+	parser.add_argument('corpus_dir', type=str,
+	                   help='directory of corpus containing pre-tokenized files')
+	parser.add_argument('corpus_ext', type=str, default='.c',
 	                   help='extension of files in corpus')
-	parser.add_argument('--out_dir', type=str, default='../../data/code/',
+	parser.add_argument('out_dir', type=str,
 	                   help='output directory for tokenized file and logs')
+	parser.add_argument('train_percent', type=float, default=.7,
+						help='percent of files, (0 - 1] inclusive, in corpus to use for training')
+	parser.add_argument('valid_percent', type=float, default=.15,
+					   	help='percent of files, [0 - 1] inclusive, in corpus to use for validation')
+	parser.add_argument('test_percent', type=float, default=.15,
+					   	help='percent of files, [0 - 1] inclusive, in corpus to use for testing')
 	parser.add_argument('--vocab_size', type=int, default=-1,
-	                   help='vocabulary size. A value of -1 corresponds to a vocabulary size equal to the number unique tokens in the corpus')
-	parser.add_argument('--train_percent', type=float, default=.7,
-						help='Percent of files, (0 - 1] inclusive, in corpus to use for training')
-	parser.add_argument('--valid_percent', type=float, default=.15,
-					   	help='Percent of files, [0 - 1] inclusive, in corpus to use for validation')
-	parser.add_argument('--test_percent', type=float, default=.15,
-					   	help='Percent of files, [0 - 1] inclusive, in corpus to use for testing')
+	                   help='vocabulary size. A value of -1 corresponds to a vocabulary size equal to the number unique tokens in the corpus')	
 	parser.add_argument('--import_vocab_from', type=str,
-						help='Optional argument that allows you to use a pre existing vocabulary from a save directory')
+						help='Path to save directory that allows you to use a pre existing vocabulary')
 
 	args = parser.parse_args()
 
@@ -120,13 +116,15 @@ def get_vocab(token_files, vocab_size):
 	token_freqs = defaultdict(int)
 	
 	for token_file in token_files:
-		with open(token_file, 'r') as token_f:
-			for token in token_f.read().split():
+		with open(token_file, 'r') as f:
+			tokens = f.read().split()
+			for token in tokens:
 				token_freqs[token] += 1
 				total_tokens += 1
 
 	return create_vocab(token_freqs, vocab_size)
 
+# Limit the vocaulary to the specified vocab size
 def create_vocab(token_freqs, vocab_size):
 	vocab_tokens = sorted(token_freqs, key=token_freqs.get, reverse=True)
 	if vocab_size != -1 and vocab_size < len(vocab_tokens):
@@ -134,56 +132,35 @@ def create_vocab(token_freqs, vocab_size):
 	vocab_tokens = set(vocab_tokens)
 	return vocab_tokens
 
+# Write tokenized file using the specified vocab as well as the corresponding
+# token types
 def create_vocab_files(token_files, out_dir, token_file_name, token_type_file_name, vocab):
 	token_out_file = os.path.join(out_dir, token_file_name)
 	token_type_out_file = os.path.join(out_dir, token_type_file_name)	
 
-	lexer = get_lexer_by_name('C')
-	i = 0
 	with open(token_out_file, 'w') as token_out, open(token_type_out_file, 'w') as token_type_out:
 		for token_file in token_files:
-			i += 1
-			print("{0}: {1}".format(token_file_name,i))
+			token_type_file = token_file + ".types.pkl"
+			with open(token_type_file, 'rb') as f:
+				token_types = cPickle.load(f)
 
 			token_out.write(START_TOKEN + "\n")
 			token_type_out.write('START_TOKEN' + "\n")
 			with open(token_file, 'r') as tok_f:
-				tokens = tok_f.read().split()
-				# Implement to get token types in batches
-				# token_types = get_token_types(tokens, lexer)
-				for token in tokens:
-					token_type_out.write(get_token_type(lexer, token) + "\n")
-					if token in vocab:
-						token_out.write(token + "\n")
-					else:
-						token_out.write(UNK_TOKEN + "\n")
+				i = 0
+				for line in tok_f:
+					tokens = line.split()
+					for token in tokens:
+						token_type_out.write(token_types[i] + "\n")
+						i += 1
+						if token in vocab:
+							token_out.write(token + " ")
+						else:
+							token_out.write(UNK_TOKEN + " ")
+					token_out.write("\n")			
+
 			token_out.write(END_TOKEN + "\n")
 			token_type_out.write("END_TOKEN" + "\n")
-
-def get_token_type(lexer, token):
-	if token == START_TOKEN:
-		return 'START_TOKEN'
-	elif token == END_TOKEN:
-		return 'END_TOKEN'
-	elif token == UNK_TOKEN:
-		return 'Token.Name'
-	elif token == '<int>':
-		return 'Token.Literal.Number.Integer'
-	elif token == '<float>':
-		return 'Token.Literal.Number.Float'
-	elif token == '<oct>':
-		return 'Token.Literal.Number.Oct'
-	elif token == '<bin>':
-		return 'Token.Literal.Number.Bin'
-	elif token == '<hex>':
-		return 'Token.Literal.Number.Hex'
-	elif token == '<num>':
-		return 'Token.Literal.Number'
-	elif token == '<str>':
-		return 'Token.Literal.String'
-	else:
-		res = lex(token, lexer)
-		return str(list(res)[0][0])
 
 def create_reversed_input_file(out_dir, use_valid_file, use_test_file):
 	rev_dir = os.path.join(out_dir, "rev")
