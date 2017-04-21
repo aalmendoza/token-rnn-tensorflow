@@ -23,6 +23,10 @@ def get_tokenization(lexedWoComments):
                     token_types.append(token_type)
             else:
                 tokenized_string += token_stripped + "\n"
+
+                # Edge case for stray "/" in code
+                if token_stripped == "\\":
+                    token_types.append(token_type)
             curr_line_empty = True
         elif t[0] == Token.Text:
             continue
