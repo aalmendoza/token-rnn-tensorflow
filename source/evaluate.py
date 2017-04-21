@@ -1,5 +1,5 @@
 from __future__ import print_function
-from lexer import simplePyLex
+from utils.lexer import simplePyLex
 import numpy as np
 import tensorflow as tf
 
@@ -15,9 +15,9 @@ from six import text_type
 
 def main():
 	parser = argparse.ArgumentParser()
-	parser.add_argument('--save_dir', type=str, default='save',
+	parser.add_argument('save_dir', type=str, default='save',
 					   help='model directory to store checkpointed models')
-	parser.add_argument('--source', type=str, default='code.c',
+	parser.add_argument('source', type=str, default='code.c',
 					   help='source file to evaluate')
 	parser.add_argument('--pre_tokenized', type=str, default='false',
 					   help='boolean indicating if the source file is already tokenized')
@@ -52,11 +52,8 @@ def str2bool(s):
 	return s.lower() in ('t', 'true', '1', 'yes')
 
 def get_tokens(source):
-	tmp_outfile = '/tmp/out.txt'
-	simplePyLex.main(source, tmp_outfile, 3, "full", "True", "False")
-	with open(tmp_outfile) as f:
-		token_list = f.read().split(" ")
-	return token_list[:-1] # Remove ending newline entry
+	tokenized_code, _ = simplePyLex.tokenize_file(source, 3)
+	return tokenized_code.split()
 
 def convert_to_vocab_tokens(vocab, token_list, start_token, end_token, unk_token):
 	res = [start_token]
