@@ -40,9 +40,8 @@ def main():
 	if args.import_vocab_from is not None:
 		vocab = load_vocab(args.import_vocab_from)
 		token_files = glob.glob("{0}/*{1}".format(args.corpus_dir, args.corpus_ext))
-		token_out_file = os.path.join(args.out_dir, "input.txt")
-		token_types_out_file = os.path.join(args.out_dir, "input_types.txt")
-		create_input_file(token_files, token_out_file, token_types_out_file, vocab)
+		create_vocab_files(token_files, args.out_dir, "input.txt", "input_types.txt",
+			vocab)
 	else:
 		create_train_test_files(args)
 
@@ -141,6 +140,7 @@ def create_vocab_files(token_files, out_dir, token_file_name, token_type_file_na
 	with open(token_out_file, 'w') as token_out, open(token_type_out_file, 'w') as token_type_out:
 		for token_file in token_files:
 			token_type_file = token_file + ".types.pkl"
+			assert os.path.isfile(token_type_file), "Missing file {0}. Make sure to run utils/tokenize_corpus.py first. Check the README for more information.".format(token_type_file)
 			with open(token_type_file, 'rb') as f:
 				token_types = cPickle.load(f)
 
