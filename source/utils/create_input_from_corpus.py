@@ -57,8 +57,8 @@ def validate_args(args):
 
 def load_vocab(save_dir):
 	assert os.path.isdir(save_dir)," %s must be a a path" % save_dir
-	assert os.path.isfile(os.path.join(save_dir,"chars_vocab.pkl")),"chars_vocab.pkl.pkl file does not exist in path %s" % save_dir
-	with open(os.path.join(save_dir, 'chars_vocab.pkl'), 'rb') as f:
+	assert os.path.isfile(os.path.join(save_dir,"token_vocab.pkl")),"token_vocab.pkl.pkl file does not exist in path %s" % save_dir
+	with open(os.path.join(save_dir, 'token_vocab.pkl'), 'rb') as f:
 		chars, vocab = cPickle.load(f)
 	return vocab
 
