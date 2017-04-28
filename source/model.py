@@ -2,8 +2,6 @@ import tensorflow as tf
 from tensorflow.contrib import rnn
 from tensorflow.contrib import legacy_seq2seq
 
-from utils.distribution_stats import DistributionStats
-
 from collections import defaultdict
 import numpy as np
 
