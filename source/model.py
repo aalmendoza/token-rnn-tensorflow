@@ -125,3 +125,17 @@ class Model():
 			print("Predicted next token: {0}, Prob: {1}\n".format(tokens[np.argmax(prob_dist)], np.max(prob_dist)))
 		print("Average entropy: {0}".format(total_entropy / (len(token_list) - 1)))
 		return token_probs[:-1]
+
+	def get_entropy_per_token(self, sess, vocab, token_list):
+		entropy_list = []
+		state = sess.run(self.cell.zero_state(1, tf.float32))
+		for n in range(len(token_list)-1):
+			x = np.zeros((1, 1))
+			x[0, 0] = vocab[token_list[n]]
+			feed = {self.input_data: x, self.initial_state:state}
+			[probs, state] = sess.run([self.probs, self.final_state], feed)
+			prob_dist = probs[0]
+			prob_next_token = prob_dist[vocab[token_list[n+1]]]
+			entropy_next_token = -1.0 * np.log2(prob_next_token)
+			entropy_list.append(entropy_next_token)
+		return entropy_list[:-1]
