@@ -15,9 +15,9 @@ from six import text_type
 
 def main():
 	parser = argparse.ArgumentParser()
-	parser.add_argument('save_dir', type=str, default='save',
-					   help='model directory to store checkpointed models')
-	parser.add_argument('source', type=str, default='code.c',
+	parser.add_argument('save_dir', type=str,
+					   help='save directory where model checkpoints are stored')
+	parser.add_argument('source', type=str,
 					   help='source file to evaluate')
 	parser.add_argument('language', type=str, default='C',
 					   help='programming language of source file')
