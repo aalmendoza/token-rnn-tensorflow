@@ -3,7 +3,7 @@ Token level RNN language model for any given code corpus.
 
 ## Dependencies
 
-* python-3.4.3 (may work for previous version)
+* python3
 * pygments
   * sudo pip3 install Pygments
 * numpy
