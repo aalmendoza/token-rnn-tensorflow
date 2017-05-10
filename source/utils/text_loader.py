@@ -3,10 +3,7 @@ import os
 import collections
 from six.moves import cPickle
 import numpy as np
-
-import sys
-
-UNK_TOKEN = '<UNK>'
+from . import special_tokens
 
 class TextLoader():
 	def __init__(self, data_dir, batch_size, seq_length, encoding='utf-8'):
@@ -35,7 +32,7 @@ class TextLoader():
 		with codecs.open(input_file, "r", encoding=self.encoding, errors='ignore') as f:
 			for line in f:
 				for token in line.split():
-					if token == UNK_TOKEN:
+					if token == special_tokens.UNK_TOKEN:
 						contains_unk_token = True
 					data.append(token)
 
@@ -45,7 +42,7 @@ class TextLoader():
 		count_pairs = sorted(counter.items(), key=lambda x: -x[1])
 		self.tokens, _ = zip(*count_pairs)
 		if not contains_unk_token:
-			self.tokens = self.tokens + (UNK_TOKEN,)
+			self.tokens = self.tokens + (special_tokens.UNK_TOKEN,)
 
 		self.vocab_size = len(self.tokens)
 		# vocab is a map from a token to a unique id

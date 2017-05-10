@@ -4,17 +4,18 @@ from tensorflow.contrib import legacy_seq2seq
 
 from collections import defaultdict
 import numpy as np
+from utils import special_tokens
 
 class Model():
 	def __init__(self, args, reverse_input, infer=False):
 		if reverse_input:
-			self.start_token = '<EOF>'
-			self.end_token = '<START>'
+			self.start_token = special_tokens.END_TOKEN
+			self.end_token = special_tokens.START_TOKEN
 		else:
-			self.start_token = '<START>'
-			self.end_token = '<EOF>'
+			self.start_token = special_tokens.START_TOKEN
+			self.end_token = special_tokens.END_TOKEN
 
-		self.unk_token = '<UNK>'
+		self.unk_token = special_tokens.UNK_TOKEN
 
 		self.args = args
 		if infer:

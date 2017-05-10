@@ -4,6 +4,7 @@ import os.path
 from math import ceil
 from six.moves import cPickle
 from collections import defaultdict
+import special_tokens
 
 UNK_TOKEN = '<UNK>'
 START_TOKEN = '<START>'
@@ -52,7 +53,7 @@ def validate_args(args):
 	assert (args.train_percent + args.valid_percent + args.test_percent == 1), "percentage splits must add up to 1"
 	assert os.path.isdir(args.corpus_dir), "corpus_dir {0} doesn't exist".format(args.corpus_dir)
 	if not os.path.isdir(args.out_dir):
-		os.system("mkdir {0}".format(args.out_dir))
+		os.system("mkdir -p {0}".format(args.out_dir))
 
 def load_vocab(save_dir):
 	assert os.path.isdir(save_dir)," %s must be a a path" % save_dir
@@ -144,7 +145,7 @@ def create_vocab_files(token_files, out_dir, token_file_name, token_type_file_na
 			with open(token_type_file, 'rb') as f:
 				token_types = cPickle.load(f)
 
-			token_out.write(START_TOKEN + "\n")
+			token_out.write(special_tokens.START_TOKEN + "\n")
 			token_type_out.write('START_TOKEN' + "\n")
 			with open(token_file, 'r') as tok_f:
 				i = 0
@@ -156,10 +157,10 @@ def create_vocab_files(token_files, out_dir, token_file_name, token_type_file_na
 						if token in vocab:
 							token_out.write(token + " ")
 						else:
-							token_out.write(UNK_TOKEN + " ")
+							token_out.write(special_tokens.UNK_TOKEN + " ")
 					token_out.write("\n")			
 
-			token_out.write(END_TOKEN + "\n")
+			token_out.write(special_tokens.END_TOKEN + "\n")
 			token_type_out.write("END_TOKEN" + "\n")
 
 def create_reversed_input_file(out_dir, use_valid_file, use_test_file):
