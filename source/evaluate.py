@@ -21,14 +21,13 @@ def main():
 					   help='source file to evaluate')
 	parser.add_argument('language', type=str, default='C',
 					   help='programming language of source file')
-	parser.add_argument('--pre_tokenized', type=str, default='false',
-					   help='boolean indicating if the source file is already tokenized')
+	parser.add_argument('--pre_tokenized', action="store_true",
+					   help='boolean indicating if the source file is already tokenized. use this argument if using the test file that was automatically created')
 
 	args = parser.parse_args()
 	evaluate(args)
 
 def evaluate(args):
-	pre_tokenized = str2bool(args.pre_tokenized)
 	with open(os.path.join(args.save_dir, 'config.pkl'), 'rb') as f:
 		(saved_args, reverse_input) = cPickle.load(f)
 	with open(os.path.join(args.save_dir, 'token_vocab.pkl'), 'rb') as f:
@@ -40,7 +39,7 @@ def evaluate(args):
 		ckpt = tf.train.get_checkpoint_state(args.save_dir)
 		if ckpt and ckpt.model_checkpoint_path:
 			saver.restore(sess, ckpt.model_checkpoint_path)
-			if pre_tokenized:
+			if args.pre_tokenized:
 				with open(args.source, 'r') as f:
 					token_list = f.read().split()
 			else:
@@ -49,9 +48,6 @@ def evaluate(args):
 			token_list = convert_to_vocab_tokens(vocab, token_list, model.start_token,
 				model.end_token, model.unk_token)
 			probs = model.evaluate(sess, tokens, vocab, token_list)
-
-def str2bool(s):
-	return s.lower() in ('t', 'true', '1', 'yes')
 
 def get_tokens(source, language):
 	tokenized_code, _ = simplePyLex.tokenize_file(source, language)
