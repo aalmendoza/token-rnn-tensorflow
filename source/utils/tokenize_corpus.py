@@ -30,7 +30,7 @@ def tokenize_corpus(corpus_dir, corpus_ext, out_dir):
 	corpus_files = glob.glob("{0}/**/*{1}".format(corpus_dir, corpus_ext), recursive=True)
 	i = 0
 	for file in corpus_files:
-		tokenized_text, token_types = simplePyLex.tokenize_file(file, 3)
+		tokenized_text, token_types = simplePyLex.tokenize_file(file)
 		if len(tokenized_text) != 0:
 			tokenized_file = os.path.join(out_dir, "{0}{1}".format(i, corpus_ext))
 			token_types_file = os.path.join(out_dir, "{0}{1}.types.pkl".format(i, corpus_ext))

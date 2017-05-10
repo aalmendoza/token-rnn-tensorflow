@@ -19,6 +19,8 @@ def main():
 					   help='model directory to store checkpointed models')
 	parser.add_argument('source', type=str, default='code.c',
 					   help='source file to evaluate')
+	parser.add_argument('language', type=str, default='C',
+					   help='programming language of source file')
 	parser.add_argument('--pre_tokenized', type=str, default='false',
 					   help='boolean indicating if the source file is already tokenized')
 
@@ -42,7 +44,7 @@ def evaluate(args):
 				with open(args.source, 'r') as f:
 					token_list = f.read().split()
 			else:
-				token_list = get_tokens(args.source)
+				token_list = get_tokens(args.source, args.language)
 				
 			token_list = convert_to_vocab_tokens(vocab, token_list, model.start_token,
 				model.end_token, model.unk_token)
@@ -51,19 +53,23 @@ def evaluate(args):
 def str2bool(s):
 	return s.lower() in ('t', 'true', '1', 'yes')
 
-def get_tokens(source):
-	tokenized_code, _ = simplePyLex.tokenize_file(source, 3)
+def get_tokens(source, language):
+	tokenized_code, _ = simplePyLex.tokenize_file(source, language)
 	return tokenized_code.split()
 
 def convert_to_vocab_tokens(vocab, token_list, start_token, end_token, unk_token):
-	res = [start_token]
+	res = []
+	if token_list[0] != start_token:
+		res.append(start_token)
+
 	for token in token_list:
 		if token in vocab:
 			res.append(token)
 		else:
 			res.append(unk_token)
 
-	res.append(end_token)
+	if token_list[-1] != end_token:
+		res.append(end_token)
 	return res
 
 if __name__ == '__main__':
