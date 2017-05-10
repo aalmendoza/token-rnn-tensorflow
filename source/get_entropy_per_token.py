@@ -74,5 +74,16 @@ def display_results(token_list, entropy_list):
 	for i in range(len(entropy_list)):
 		print("{0},{1}".format(token_list[i+1], entropy_list[i]))
 
+	mean = np.mean(entropy_list)
+	std = np.std(entropy_list)
+	q1 = np.percentile(entropy_list, 25)
+	q2 = np.percentile(entropy_list, 50)
+	q3 = np.percentile(entropy_list, 75)
+	print("\nMean: {0}".format(mean))
+	print("Std: {0}".format(std))
+	print("Q1: {0}".format(q1))
+	print("Q2: {0}".format(q2))
+	print("Q3: {0}".format(q3))
+
 if __name__ == '__main__':
 	main()
