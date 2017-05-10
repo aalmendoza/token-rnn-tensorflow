@@ -26,7 +26,7 @@ Doing so will store the tokenized files of the corpus in the directory *../data/
 python3 utils/create_input_from_corpus.py ../data/example/files/ ".c" ../data/example/ .7 .15 .15 --vocab_size 100
 ```
 
-Running this command will split the corpus into 70% training data, 15% validation data, and 15% testing data as well as produce the RNN LM input file for each set. In addition, the corresponding token types and the files used in each split are logged. Note to check all of the arguments by passing -h to *utils/create_input_from_corpus.py*. In *../../data/example* you will find the following generated files.
+Running this command will split the corpus into 70% training data, 15% validation data, and 15% testing data as well as produce the RNN LM input file for each set. In addition, the corresponding token types and the files used in each split are logged. Note to check all of the arguments by passing -h to *utils/create_input_from_corpus.py*. In *../data/example* you will find the following generated files.
 
 ````
 files           test.txt         train.txt        valid.txt
@@ -34,7 +34,7 @@ rev             test_types.txt   train_types.txt  valid_types.txt
 test_files.txt  train_files.txt  valid_files.txt
 ````
 
-Since we specified a vocbulary size of 100, in *train.txt*, *valid.txt*, and *test.txt* the top 100 most frequent tokens in the corpus will appear verbatim and all other tokens will be replaced by the `<UNK>` token. A value of -1 for vocab_size indicates to make the vocabulary size equal to the number of unique tokens in the corpus.
+Since we specified a vocbulary size of 100, in *train.txt*, *valid.txt*, and *test.txt* the top 100 most frequent tokens in the corpus will appear verbatim and all other tokens will be replaced by the `<unk>` token. A value of -1 for vocab_size indicates to make the vocabulary size equal to the number of unique tokens in the corpus.
 
 Now we can train the model using the file *train.txt* as input. For brevity, many of the options for train.py are excluded. 
 
