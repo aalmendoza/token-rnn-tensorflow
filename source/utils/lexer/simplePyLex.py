@@ -79,6 +79,7 @@ def tokenize_file(source_file, language=None, literal_option=3):
     if language is None:
         try:
             lexer = get_lexer_for_filename(source_file)
+            language = languageForLexer(lexer)
         except KeyError: # Not a valid extension
             lexer = guess_lexer(code)
             language = languageForLexer(lexer)
