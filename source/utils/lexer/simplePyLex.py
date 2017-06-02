@@ -43,7 +43,7 @@ def tokenize_code(code, language, lexer, literal_option):
     tokensList = list(tokens)
 
     # Strip comments and alter strings
-    lexedWoComments = tokensExceptTokenType(tokensList, Token.Comment)
+    lexedWoComments = tokensExceptTokenType(tokensList, Token.Comment, retainedTypes=[Token.Comment.Preproc, Token.Comment.PreprocFile])
     lexedWoComments = tokensExceptTokenType(lexedWoComments, Token.Literal.String.Doc)
     lexedWoComments = fixTypes(lexedWoComments, language) #Alter the pygments lexer types to be more comparable between our languages
     lexedWoComments = convertNamespaceTokens(lexedWoComments, language)
