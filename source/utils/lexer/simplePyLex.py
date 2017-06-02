@@ -17,6 +17,11 @@ def get_tokenization(lexedWoComments):
         token = t[1]
         token_stripped = token.strip()
 
+        # Pygments will sometimes two seperate tokens as one
+        # In this case, append an extra copy of the same type
+        if len(token.split()) > 1:
+            token_types.append(token_type)
+
         if '\n' in token:
             if curr_line_empty:
                 if t[0] != Token.Text and token_stripped != '':
