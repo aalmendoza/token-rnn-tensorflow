@@ -1,4 +1,4 @@
-from .utilities import *
+from lexer.utilities import *
 from pygments.lexers import get_lexer_for_filename, get_lexer_by_name, guess_lexer
 from pygments import lex
 import re
