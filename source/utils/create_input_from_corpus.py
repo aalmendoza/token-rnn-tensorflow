@@ -6,9 +6,6 @@ from six.moves import cPickle
 from collections import defaultdict
 import special_tokens
 
-UNK_TOKEN = '<UNK>'
-START_TOKEN = '<START>'
-END_TOKEN = '<EOF>'
 TRAIN_FILE = 'train.txt'
 TEST_FILE = 'test.txt'
 VALID_FILE = 'valid.txt'
