@@ -32,12 +32,22 @@ import argparse
 # In English, entropy per word is 11.82 bits
 
 
+# ind
 
-def correct(source_code)
+def correct(token_list, probs)
 	fixed = []
-	for
-	return fixed
+	# create an index array
+	i = 0
+	indices = []
+	for t in token_list:
+		indices.append(i)
+		i++
 
+	# lowest prob => highest entropy
+	bottom_probs = []
+	
+	
+	return fixed
 
 
 if __name__ == "__main__":
@@ -78,8 +88,4 @@ if __name__ == "__main__":
 			saver.restore(sess, ckpt.model_checkpoint_path)
 			probs = model.evaluate(sess, tokens, vocab, token_list)
 
-
-
-	with open(args.source, "r") as f:
-		source_code = f.read
-	fixed = correct(args.source)
+	fixed = correct(token_list, probs)
